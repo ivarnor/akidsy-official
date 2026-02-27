@@ -1,54 +1,65 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
-import { Sparkles, Loader2, LogIn, Mail, Lock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Sparkles, Loader2, LogIn, Mail, Lock, UserPlus } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [isEmailSent, setIsEmailSent] = useState(false);
     const supabase = createClient();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
-    const handleLogin = async (e: React.FormEvent) => {
+    useEffect(() => {
+        // Automatically switch to sign up mode if they came from the 7-day trial link
+        const message = searchParams.get('message');
+        if (message && message.includes('trial')) {
+            setIsSignUp(true);
+        }
+    }, [searchParams]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setIsEmailSent(false);
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        if (isSignUp) {
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                }
+            });
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
+            if (error) {
+                setError(error.message);
+                setLoading(false);
+            } else {
+                setIsEmailSent(true);
+                setLoading(false);
+            }
         } else {
-            router.push('/admin');
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                setError(error.message);
+                setLoading(false);
+            } else {
+                router.push('/admin');
+            }
         }
-    };
-
-    const handleSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-        });
-
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-        } else {
-            alert('Magic Link or Confirmation Sent! Please check your email (and spam) if requested. You can now try logging in.');
-            setLoading(false);
-        }
-    };
+    };// Removed old handlers
 
     return (
         <div className="min-h-screen bg-cream flex items-center justify-center p-6 font-sans text-navy">
@@ -59,12 +70,19 @@ export default function LoginPage() {
                     </div>
                     <div>
                         <h1 className="text-4xl font-extrabold tracking-tight">Welcome to Akidsy</h1>
-                        <p className="font-bold text-navy/60 mt-2">Log in or sign up to continue</p>
+                        <p className="font-bold text-navy/60 mt-2">
+                            {isSignUp ? "Create an account to continue" : "Log in to continue"}
+                        </p>
                     </div>
                 </header>
 
                 <main className="bg-white border-4 border-navy rounded-[2.5rem] p-8 shadow-[10px_10px_0px_0px_#1C304A]">
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    {searchParams.get('message') && !isSignUp && (
+                        <div className="bg-sunshine/20 border-2 border-sunshine text-navy p-4 rounded-xl font-bold text-sm mb-6 text-center">
+                            {searchParams.get('message')}
+                        </div>
+                    )}
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
                             <label className="font-extrabold text-lg flex items-center gap-2">
                                 <Mail className="w-5 h-5 text-sky" /> Email
@@ -99,17 +117,38 @@ export default function LoginPage() {
                             </div>
                         )}
 
+                        {isEmailSent && (
+                            <div className="bg-green-50 border-2 border-green-500 text-green-700 p-4 rounded-xl font-bold text-sm text-center">
+                                Registration successful! Please check your email to confirm your account.
+                            </div>
+                        )}
+
                         <div className="flex flex-col gap-4 pt-4">
                             <button
-                                disabled={loading}
+                                disabled={loading || isEmailSent}
                                 type="submit"
                                 className="w-full bg-sky text-white font-black text-2xl py-5 rounded-2xl border-4 border-navy hover:bg-sky/90 transition-all active:scale-95 shadow-[4px_4px_0px_0px_#1C304A] disabled:opacity-50 flex items-center justify-center gap-3"
                             >
                                 {loading ? (
                                     <Loader2 className="w-8 h-8 animate-spin" />
                                 ) : (
-                                    <>Log In / Sign Up <LogIn className="w-6 h-6" /></>
+                                    <>
+                                        {isSignUp ? "Sign Up" : "Log In"}
+                                        {isSignUp ? <UserPlus className="w-6 h-6" /> : <LogIn className="w-6 h-6" />}
+                                    </>
                                 )}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsSignUp(!isSignUp);
+                                    setError(null);
+                                    setIsEmailSent(false);
+                                }}
+                                className="text-navy font-bold hover:underline transition-all text-sm mt-2"
+                            >
+                                {isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
                             </button>
 
                             <div className="relative my-4 flex items-center py-2">
@@ -150,5 +189,13 @@ export default function LoginPage() {
                 </footer>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-cream flex items-center justify-center p-6 font-sans text-navy"><Loader2 className="w-12 h-12 animate-spin text-sky" /></div>}>
+            <LoginContent />
+        </Suspense>
     );
 }
