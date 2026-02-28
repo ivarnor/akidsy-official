@@ -31,12 +31,6 @@ export default async function SalesPage({
           <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
           Akidsy
         </div>
-        <Link
-          href="/dashboard"
-          className="bg-sky text-navy font-bold text-lg px-8 py-3 rounded-full border-4 border-navy hover:bg-sky/80 transition-transform hover:scale-105 active:scale-95 shadow-[4px_4px_0px_0px_#1C304A]"
-        >
-          Member Login
-        </Link>
       </nav>
 
       {/* Hero Section */}
@@ -321,6 +315,7 @@ export default async function SalesPage({
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
+            <Link href="/login" className="hover:text-white transition-colors">Member Login</Link>
           </div>
           <div className="text-white/50 text-sm">
             © {new Date().getFullYear()} Akidsy. All rights reserved.

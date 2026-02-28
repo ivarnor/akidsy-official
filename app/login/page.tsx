@@ -59,7 +59,17 @@ function LoginContent() {
                 if (data?.user?.email === 'ivarnor@gmail.com') {
                     router.push('/admin');
                 } else {
-                    router.push('/dashboard');
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_member')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (profile?.is_member) {
+                        router.push('/dashboard');
+                    } else {
+                        window.location.href = '/api/checkout';
+                    }
                 }
             }
         }
