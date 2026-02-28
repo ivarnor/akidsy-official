@@ -14,6 +14,7 @@
     "@hookform/resolvers": "^5.2.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@types/video.js": "^7.3.58",
     "autoprefixer": "^10.4.21",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
@@ -26,7 +27,8 @@
     "react-dom": "^19.2.1",
     "recharts": "^3.7.0",
     "stripe": "^20.4.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "video.js": "^8.23.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",

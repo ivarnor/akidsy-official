@@ -141,6 +141,9 @@ export default function AdminPage() {
         if (isContent) {
             const cat = formData.category.toLowerCase().replace(/\s+/g, '-');
             folder = cat;
+            if (formData.category === 'Videos') {
+                bucket = 'videos';
+            }
         } else {
             bucket = 'thumbnails';
             folder = 'covers';
@@ -162,15 +165,21 @@ export default function AdminPage() {
 
             if (uploadError) throw uploadError;
 
-            const { data } = supabase.storage
-                .from(bucket)
-                .getPublicUrl(filePath);
+            let contentUrl = '';
 
-            const publicUrl = data.publicUrl;
+            // Videos bucket is private, so publicUrl is useless. We store the raw path for signed URLs later
+            if (bucket === 'videos') {
+                contentUrl = filePath;
+            } else {
+                const { data } = supabase.storage
+                    .from(bucket)
+                    .getPublicUrl(filePath);
+                contentUrl = data.publicUrl;
+            }
 
             setFormData(prev => ({
                 ...prev,
-                [isContent ? 'url' : 'thumbnail_url']: publicUrl
+                [isContent ? 'url' : 'thumbnail_url']: contentUrl
             }));
 
         } catch (err: any) {
@@ -226,12 +235,15 @@ export default function AdminPage() {
             if (itemToDelete) {
                 const extractPath = (url: string, bucketName: string) => url?.split(`/${bucketName}/`)[1]?.split('?')[0];
 
-                const contentPath = extractPath(itemToDelete.url, 'content-assets');
+                const contentPath = extractPath(itemToDelete.url, 'content-assets') || itemToDelete.url; // If it's a video, url IS the path
                 const thumbPath = extractPath(itemToDelete.thumbnail_url, 'thumbnails') || extractPath(itemToDelete.thumbnail_url, 'content-assets'); // Fallback for old items
 
-                if (contentPath) {
+                if (contentPath && itemToDelete.category !== 'Videos') {
                     const { error } = await supabase.storage.from('content-assets').remove([contentPath]);
                     if (error) console.error("Content storage delete error:", error);
+                } else if (contentPath && itemToDelete.category === 'Videos') {
+                    const { error } = await supabase.storage.from('videos').remove([contentPath]);
+                    if (error) console.error("Video storage delete error:", error);
                 }
                 if (thumbPath) {
                     // Determine which bucket it was in by checking the URL string

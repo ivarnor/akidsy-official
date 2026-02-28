@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { createClient } from '@/src/utils/supabase/client';
 import { PlayCircle, Star, Sparkles, Loader2, Compass, BookOpen } from 'lucide-react';
 import { PdfViewerModal } from '@/src/components/PdfViewerModal';
+import { VideoPlayerModal } from '@/src/components/VideoPlayerModal';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -15,6 +16,8 @@ function DashboardContent() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
+  const [selectedVideo, setSelectedVideo] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
+  const [fetchingSecureUrl, setFetchingSecureUrl] = useState<string | null>(null); // Track ID of item fetching URL
 
   useEffect(() => {
     async function fetchContent() {
@@ -102,6 +105,7 @@ function DashboardContent() {
             {items.map((item) => (
               <button
                 key={item.id}
+                disabled={fetchingSecureUrl === item.id}
                 onClick={async () => {
                   if (item.url) {
                     try {
@@ -114,12 +118,31 @@ function DashboardContent() {
 
                     if (item.category === 'Coloring books') {
                       setSelectedPdf({ url: item.url, title: item.title });
+                    } else if (item.category === 'Videos') {
+                      // Videos are stored in a private bucket, we must generate a signed URL
+                      setFetchingSecureUrl(item.id);
+                      try {
+                        const { data, error } = await supabase.storage
+                          .from('videos')
+                          .createSignedUrl(item.url, 3600); // 1 Hour secure link
+
+                        if (error) {
+                          console.error("Error generating signed URL", error);
+                          alert("Sorry, we couldn't load this video right now.");
+                        } else if (data) {
+                          setSelectedVideo({ url: data.signedUrl, title: item.title });
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setFetchingSecureUrl(null);
+                      }
                     } else {
                       window.open(item.url, '_blank');
                     }
                   }
                 }}
-                className="group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none outline-none focus-visible:ring-4 ring-sky ring-offset-2"
+                className={`group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none outline-none focus-visible:ring-4 ring-sky ring-offset-2 ${fetchingSecureUrl === item.id ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {/* Thumbnail Area - Book Cover style */}
                 <div className="aspect-[4/5] relative overflow-hidden bg-cream border-b-4 border-navy w-full">
@@ -130,6 +153,7 @@ function DashboardContent() {
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-sky/10">
@@ -145,9 +169,11 @@ function DashboardContent() {
                   </div>
 
                   {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-navy/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
+                  <div className={`absolute inset-0 bg-navy/40 backdrop-blur-[2px] transition-opacity duration-300 z-10 flex items-center justify-center ${fetchingSecureUrl === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
-                      {item.category === 'Videos' ? (
+                      {fetchingSecureUrl === item.id ? (
+                        <Loader2 className="w-10 h-10 text-sky animate-spin" />
+                      ) : item.category === 'Videos' ? (
                         <PlayCircle className="w-10 h-10 text-persimmon" />
                       ) : (
                         <BookOpen className="w-10 h-10 text-sky" />
@@ -183,6 +209,12 @@ function DashboardContent() {
         url={selectedPdf.url}
         title={selectedPdf.title}
         onClose={() => setSelectedPdf({ url: null, title: '' })}
+      />
+
+      <VideoPlayerModal
+        url={selectedVideo.url}
+        title={selectedVideo.title}
+        onClose={() => setSelectedVideo({ url: null, title: '' })}
       />
     </div>
   );
