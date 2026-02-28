@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 });
 
 // Standard site configuration
-const DEFAULT_PRICE_ID = 'prod_U3cYESQofBj6vO';
+const DEFAULT_PRICE_ID = 'price_1T5VJBC1HhLD0dXEcjcrAEKX';
 
 // The POST handler works well for manual checkout requests passed from client components
 export async function POST(req: Request) {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             subscription_data: {
                 trial_period_days: 7
             },
-            success_url: `https://www.akidsy.com/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `https://www.akidsy.com/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?canceled=true`,
             customer_email: userEmail,
             client_reference_id: userEmail, // Supabase user email linking
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
             subscription_data: {
                 trial_period_days: 7
             },
-            success_url: `https://www.akidsy.com/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `https://www.akidsy.com/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?canceled=true`,
             customer_email: user.email,
             client_reference_id: user.email,

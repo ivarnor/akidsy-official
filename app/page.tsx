@@ -75,7 +75,7 @@ export default async function SalesPage({
         </div>
 
         <CheckoutButton
-          priceId="prod_U3cYESQofBj6vO"
+          priceId="price_1T5VJBC1HhLD0dXEcjcrAEKX"
           userEmail={user?.email}
           className="bg-persimmon text-white font-bold text-2xl px-12 py-5 rounded-full border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[6px_6px_0px_0px_#1C304A] flex items-center gap-3"
         >
@@ -214,7 +214,7 @@ export default async function SalesPage({
               </ul>
 
               <CheckoutButton
-                priceId="prod_U3cYESQofBj6vO"
+                priceId="price_1T5VJBC1HhLD0dXEcjcrAEKX"
                 userEmail={user?.email}
                 className="w-full bg-white text-navy font-black text-xl py-5 rounded-3xl border-4 border-navy hover:bg-sky/20 transition-transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 leading-none"
               >
@@ -253,7 +253,7 @@ export default async function SalesPage({
               </ul>
 
               <CheckoutButton
-                priceId="prod_U3ceJRAt7AghEF"
+                priceId="price_1T5VOmC1HhLD0dXEWdW2id7G"
                 userEmail={user?.email}
                 className="w-full bg-persimmon text-white font-black text-2xl py-6 rounded-3xl border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[6px_6px_0px_0px_#1C304A] flex flex-col items-center justify-center gap-1 leading-none"
               >
@@ -300,7 +300,7 @@ export default async function SalesPage({
             Join the Creative Explorer Club today and get instant access to hundreds of educational activities.
           </p>
           <CheckoutButton
-            priceId="prod_U3cYESQofBj6vO"
+            priceId="price_1T5VJBC1HhLD0dXEcjcrAEKX"
             userEmail={user?.email}
             className="inline-flex bg-persimmon text-white font-bold text-3xl px-16 py-6 rounded-full border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[8px_8px_0px_0px_#1C304A] items-center gap-4"
           >
