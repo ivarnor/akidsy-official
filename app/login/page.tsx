@@ -47,7 +47,7 @@ function LoginContent() {
                 setLoading(false);
             }
         } else {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
@@ -56,7 +56,11 @@ function LoginContent() {
                 setError(error.message);
                 setLoading(false);
             } else {
-                router.push('/admin');
+                if (data?.user?.email === 'ivarnor@gmail.com') {
+                    router.push('/admin');
+                } else {
+                    router.push('/dashboard');
+                }
             }
         }
     };// Removed old handlers
@@ -164,7 +168,7 @@ function LoginContent() {
                                     await supabase.auth.signInWithOAuth({
                                         provider: 'google',
                                         options: {
-                                            redirectTo: `${window.location.origin}/dashboard`,
+                                            redirectTo: `${window.location.origin}/auth/callback`,
                                         },
                                     });
                                     setLoading(false);

@@ -189,15 +189,23 @@ export default function AdminPage() {
                             Logged in as: {user?.email}
                         </p>
                     </div>
-                    <button
-                        onClick={async () => {
-                            await supabase.auth.signOut();
-                            router.push('/login');
-                        }}
-                        className="ml-auto bg-white border-4 border-navy p-3 rounded-2xl shadow-[4px_4px_0px_0px_#1C304A] hover:bg-cream transition-all font-black text-xs uppercase"
-                    >
-                        Log Out
-                    </button>
+                    <div className="ml-auto flex items-center gap-4">
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="bg-cream border-4 border-navy text-navy p-3 rounded-2xl shadow-[4px_4px_0px_0px_#1C304A] hover:bg-sky/20 transition-all font-black text-xs uppercase flex items-center gap-2"
+                        >
+                            Member Dashboard <LinkIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                router.push('/login');
+                            }}
+                            className="bg-white border-4 border-navy p-3 rounded-2xl shadow-[4px_4px_0px_0px_#1C304A] hover:bg-cream transition-all font-black text-xs uppercase"
+                        >
+                            Log Out
+                        </button>
+                    </div>
                 </header>
 
                 {/* Upload Form */}
