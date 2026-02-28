@@ -66,13 +66,12 @@ export default async function SalesPage({
           </div>
         </div>
 
-        <CheckoutButton
-          priceId="price_1T5VJBC1HhLD0dXEcjcrAEKX"
-          userEmail={user?.email}
+        <a
+          href="#pricing-section"
           className="bg-persimmon text-white font-bold text-2xl px-12 py-5 rounded-full border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[6px_6px_0px_0px_#1C304A] flex items-center gap-3"
         >
           Start Your Free Trial <Sparkles className="w-6 h-6" />
-        </CheckoutButton>
+        </a>
         <p className="mt-4 text-navy/60 font-medium">Cancel anytime. No commitment.</p>
       </header>
 
@@ -173,7 +172,7 @@ export default async function SalesPage({
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24 bg-white border-y-4 border-navy">
+      <section id="pricing-section" className="py-24 bg-white border-y-4 border-navy scroll-mt-6">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-extrabold text-navy mb-4">Invest in Your Child&apos;s Future</h2>
           <p className="text-xl text-navy/80 mb-12 max-w-2xl mx-auto font-medium">Simple, transparent pricing. Cancel anytime.</p>
@@ -291,13 +290,12 @@ export default async function SalesPage({
           <p className="text-2xl text-navy/80 font-medium mb-12">
             Join the Creative Explorer Club today and get instant access to hundreds of educational activities.
           </p>
-          <CheckoutButton
-            priceId="price_1T5VJBC1HhLD0dXEcjcrAEKX"
-            userEmail={user?.email}
+          <a
+            href="#pricing-section"
             className="inline-flex bg-persimmon text-white font-bold text-3xl px-16 py-6 rounded-full border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[8px_8px_0px_0px_#1C304A] items-center gap-4"
           >
             Start 7-Day Free Trial <Sparkles className="w-8 h-8" />
-          </CheckoutButton>
+          </a>
           <p className="mt-6 text-navy font-bold text-lg">7-Day Free Trial • Cancel Anytime</p>
         </div>
       </section>
