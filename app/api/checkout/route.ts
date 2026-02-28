@@ -12,6 +12,11 @@ const DEFAULT_PRICE_ID = 'price_1T5VJBC1HhLD0dXEcjcrAEKX';
 // The POST handler works well for manual checkout requests passed from client components
 export async function POST(req: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        console.log('User Session:', authSession);
+        console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
+
         const { priceId, userEmail } = await req.json();
 
         if (!priceId || !userEmail) {
@@ -33,7 +38,7 @@ export async function POST(req: Request) {
                 trial_period_days: 7
             },
             success_url: `https://www.akidsy.com/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?canceled=true`,
+            cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: userEmail,
             client_reference_id: userEmail, // Supabase user email linking
         });
@@ -49,13 +54,17 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     try {
         const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        console.log('User Session:', authSession);
+        console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
+
+        const user = authSession?.user;
 
         if (!user || !user.email) {
             return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/login?message=Please log in to checkout`);
         }
 
-        const session = await stripe.checkout.sessions.create({
+        const stripeSession = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             payment_method_collection: 'always',
             allow_promotion_codes: true,
@@ -70,15 +79,15 @@ export async function GET(req: Request) {
                 trial_period_days: 7
             },
             success_url: `https://www.akidsy.com/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?canceled=true`,
+            cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: user.email,
             client_reference_id: user.email,
         });
 
         // 303 See Other is optimal for navigating the browser to Stripe
-        return NextResponse.redirect(session.url as string, 303);
+        return NextResponse.redirect(stripeSession.url as string, 303);
     } catch (err: any) {
         console.error('Error creating checkout session on GET:', err);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/?error=checkout_failed`);
+        return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
