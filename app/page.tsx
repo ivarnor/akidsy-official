@@ -17,13 +17,11 @@ export default async function SalesPage({
 
   return (
     <div className="min-h-screen flex flex-col bg-cream font-sans relative">
-      {/* Banner Message */}
-      {message && (
-        <div className="bg-persimmon text-white text-center p-4 font-bold border-b-4 border-navy flex justify-center items-center gap-2">
-          <AlertCircle className="w-6 h-6" />
-          {decodeURIComponent(message)}
-        </div>
-      )}
+      {/* Banner Message (Always visible but changes text based on param) */}
+      <div className="bg-persimmon text-white text-center p-4 font-bold border-b-4 border-navy flex justify-center items-center gap-2">
+        <AlertCircle className="w-6 h-6" />
+        {message ? decodeURIComponent(message) : "⚠️ Please join the club to see this content!"}
+      </div>
 
       {/* Navigation */}
       <nav className="p-6 flex justify-between items-center max-w-7xl w-full mx-auto">
