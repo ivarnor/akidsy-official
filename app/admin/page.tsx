@@ -21,6 +21,13 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [formSubmitting, setFormSubmitting] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+    // Dashboard Stats State
+    const [totalUsers, setTotalUsers] = useState<number>(0);
+    const [recentSignups, setRecentSignups] = useState<any[]>([]);
+    const [statsLoading, setStatsLoading] = useState(true);
+
     const router = useRouter();
 
     // Individual Upload States
@@ -44,13 +51,47 @@ export default function AdminPage() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 router.push('/login');
+            } else if (session.user.email !== 'ivarnor@gmail.com') {
+                setIsAuthorized(false);
+                setLoading(false);
             } else {
                 setUser(session.user);
+                setIsAuthorized(true);
                 fetchItems();
+                fetchStats();
             }
         };
         checkUser();
     }, []);
+
+    async function fetchStats() {
+        setStatsLoading(true);
+        try {
+            // Get total count
+            const { count, error: countError } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true });
+
+            if (!countError && count !== null) {
+                setTotalUsers(count);
+            }
+
+            // Get recent signups
+            const { data: recentUsers, error: recentError } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (!recentError && recentUsers) {
+                setRecentSignups(recentUsers);
+            }
+        } catch (err) {
+            console.error('Error fetching stats:', err);
+        } finally {
+            setStatsLoading(false);
+        }
+    }
 
     async function fetchItems() {
         setLoading(true);
@@ -172,11 +213,29 @@ export default function AdminPage() {
         }
     }
 
+    if (isAuthorized === false) {
+        return (
+            <div className="min-h-screen bg-cream flex items-center justify-center p-6 font-sans text-navy">
+                <div className="max-w-md w-full bg-white border-4 border-navy rounded-[2.5rem] p-8 shadow-[10px_10px_0px_0px_#1C304A] text-center">
+                    <AlertCircle className="w-16 h-16 text-persimmon mx-auto mb-4" />
+                    <h1 className="text-3xl font-extrabold mb-2">403 Forbidden</h1>
+                    <p className="font-bold text-navy/60 mb-8">You do not have permission to access the Magic Admin Portal.</p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="w-full bg-sky text-white font-black py-4 rounded-2xl border-4 border-navy hover:bg-sky/90 transition-all shadow-[4px_4px_0px_0px_#1C304A] active:scale-95"
+                    >
+                        Return Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-cream p-6 md:p-12 font-sans text-navy">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
-                <header className="flex items-center gap-4 mb-12">
+                <header className="flex items-center gap-4 mb-8">
                     <div className="bg-sunshine p-3 rounded-2xl border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A]">
                         <Sparkles className="w-8 h-8 text-navy fill-navy" />
                     </div>
@@ -207,6 +266,46 @@ export default function AdminPage() {
                         </button>
                     </div>
                 </header>
+
+                {/* Dashboard Stats */}
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div className="bg-sky text-white border-4 border-navy rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_#1C304A] flex flex-col justify-center relative overflow-hidden">
+                        <div className="relative z-10">
+                            <h3 className="font-black text-sm uppercase tracking-wider opacity-80 mb-1">Total Users</h3>
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-6xl font-extrabold tracking-tighter">
+                                    {statsLoading ? <Loader2 className="w-10 h-10 animate-spin inline" /> : totalUsers}
+                                </span>
+                            </div>
+                        </div>
+                        <Sparkles className="w-32 h-32 absolute -right-6 -bottom-6 opacity-20 fill-white" />
+                    </div>
+
+                    <div className="bg-white border-4 border-navy rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_#1C304A]">
+                        <h3 className="font-black text-sm uppercase tracking-wider text-navy/60 mb-4 flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-persimmon" />
+                            Recent Signups
+                        </h3>
+                        {statsLoading ? (
+                            <div className="flex justify-center p-4">
+                                <Loader2 className="w-6 h-6 animate-spin text-sky" />
+                            </div>
+                        ) : recentSignups.length > 0 ? (
+                            <ul className="space-y-3">
+                                {recentSignups.map((user, idx) => (
+                                    <li key={idx} className="flex items-center justify-between text-sm font-bold border-b-2 border-dashed border-navy/10 pb-2 last:border-0">
+                                        <span className="truncate mr-4">{user.email || 'Unknown Email'}</span>
+                                        <span className="text-xs text-navy/40 shrink-0 bg-cream px-2 py-1 rounded-full border-2 border-navy">
+                                            {new Date(user.created_at).toLocaleDateString()}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm font-bold opacity-50 italic">No recent signups found.</p>
+                        )}
+                    </div>
+                </section>
 
                 {/* Upload Form */}
                 <section className="bg-white border-4 border-navy rounded-[2rem] p-8 shadow-[8px_8px_0px_0px_#1C304A] mb-12">

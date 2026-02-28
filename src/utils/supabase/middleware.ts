@@ -32,11 +32,11 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    const isPublicRoute = 
-        request.nextUrl.pathname === '/' || 
-        request.nextUrl.pathname === '/terms' || 
+    const isPublicRoute =
+        request.nextUrl.pathname === '/' ||
+        request.nextUrl.pathname === '/terms' ||
         request.nextUrl.pathname === '/privacy' ||
-        request.nextUrl.pathname.startsWith('/login') || 
+        request.nextUrl.pathname.startsWith('/login') ||
         request.nextUrl.pathname.startsWith('/auth')
 
     // Protect all non-public routes
@@ -50,7 +50,8 @@ export async function updateSession(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith('/admin')) {
         if (!user || user.email !== 'ivarnor@gmail.com') {
             const url = request.nextUrl.clone()
-            url.pathname = '/dashboard'
+            url.pathname = '/'
+            url.searchParams.set('error', 'unauthorized')
             return NextResponse.redirect(url)
         }
     }
