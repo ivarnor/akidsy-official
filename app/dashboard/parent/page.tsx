@@ -16,9 +16,13 @@ export default async function ParentDashboardPage() {
         .eq('id', user.id)
         .single();
 
-    if (!profile) {
-        redirect('/dashboard');
-    }
+    const safeProfile = profile || {
+        id: user.id,
+        show_coloring: true,
+        show_videos: true,
+        show_puzzles: true,
+        activity_log: []
+    };
 
     return (
         <div className="max-w-4xl mx-auto py-8">
@@ -32,7 +36,7 @@ export default async function ParentDashboardPage() {
                 </a>
             </div>
 
-            <ParentSettingsClient profile={profile} />
+            <ParentSettingsClient profile={safeProfile} />
         </div>
     );
 }
