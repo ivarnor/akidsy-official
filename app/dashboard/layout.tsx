@@ -41,6 +41,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           <span>•</span>
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+          <span>•</span>
+          <Link href="/account" className="hover:text-white transition-colors">Account</Link>
         </div>
         <p className="font-bold">© {new Date().getFullYear()} Akidsy • Happy Exploring! ✨</p>
       </footer>
