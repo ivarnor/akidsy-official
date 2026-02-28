@@ -53,6 +53,7 @@ export default function AdminPage() {
     // Individual Upload States
     const [contentUploading, setContentUploading] = useState(false);
     const [thumbnailUploading, setThumbnailUploading] = useState(false);
+    const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -208,9 +209,40 @@ export default function AdminPage() {
     }
 
     async function handleDelete(id: string) {
+        if (user?.email !== 'ivarnor@gmail.com') {
+            alert('Unauthorized action.');
+            return;
+        }
         if (!confirm('Are you sure you want to delete this item?')) return;
 
+        setDeletingItemId(id);
+        const itemToDelete = items.find(i => i.id === id);
+
         try {
+            // 1. Delete associated files from Storage
+            if (itemToDelete) {
+                const filesToRemove: string[] = [];
+
+                const extractPath = (url: string) => url?.split('/content-assets/')[1]?.split('?')[0];
+
+                const contentPath = extractPath(itemToDelete.url);
+                const thumbPath = extractPath(itemToDelete.thumbnail_url);
+
+                if (contentPath) filesToRemove.push(contentPath);
+                if (thumbPath) filesToRemove.push(thumbPath);
+
+                if (filesToRemove.length > 0) {
+                    const { error: storageError } = await supabase.storage
+                        .from('content-assets')
+                        .remove(filesToRemove);
+
+                    if (storageError) {
+                        console.error("Storage delete error:", storageError);
+                    }
+                }
+            }
+
+            // 2. Delete from database
             const { error } = await supabase
                 .from('content')
                 .delete()
@@ -220,9 +252,13 @@ export default function AdminPage() {
                 alert('Error deleting item: ' + error.message);
             } else {
                 fetchItems();
+                fetchDashboardData(); // Refresh top content
+                alert('Item successfully deleted! 🗑️');
             }
         } catch (err) {
             alert('Unexpected error during deletion');
+        } finally {
+            setDeletingItemId(null);
         }
     }
 
@@ -638,10 +674,11 @@ export default function AdminPage() {
                                             </span>
                                             <button
                                                 onClick={() => handleDelete(item.id)}
-                                                className="text-slate-500 hover:text-red-400 transition-colors"
+                                                disabled={deletingItemId === item.id}
+                                                className="text-slate-500 hover:text-red-400 disabled:opacity-50 transition-colors"
                                                 title="Delete Content"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                {deletingItemId === item.id ? <Loader2 className="w-4 h-4 animate-spin text-red-500" /> : <Trash2 className="w-4 h-4" />}
                                             </button>
                                         </div>
                                     </div>
