@@ -37,11 +37,18 @@ export default function DashboardHeader() {
 
                 <div className="flex items-center gap-4 shrink-0">
                     <Link
+                        href="/dashboard/parent"
+                        className="px-4 md:px-6 py-2 rounded-full border-4 border-navy bg-white font-bold text-navy hover:bg-cream transition-colors flex items-center gap-2 shadow-[2px_2px_0px_0px_#1C304A] active:translate-y-0.5 active:shadow-none"
+                    >
+                        <span className="text-xl">⚙️</span>
+                        <span className="hidden md:inline">Parent Dashboard</span>
+                    </Link>
+                    <Link
                         href="/"
                         className="px-6 py-2 rounded-full border-4 border-navy bg-cream font-bold text-navy hover:bg-sky transition-colors flex items-center gap-2 shadow-[2px_2px_0px_0px_#1C304A] active:translate-y-0.5 active:shadow-none"
                     >
                         <LogOut className="w-5 h-5" />
-                        <span className="hidden md:inline">Exit</span>
+                        <span className="hidden xl:inline">Exit</span>
                     </Link>
                 </div>
             </div>

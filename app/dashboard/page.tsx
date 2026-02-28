@@ -22,7 +22,29 @@ function DashboardContent() {
   useEffect(() => {
     async function fetchContent() {
       setLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      let excludedCategories: string[] = [];
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('show_coloring, show_videos, show_puzzles')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          if (profile.show_coloring === false) excludedCategories.push('Coloring books');
+          if (profile.show_videos === false) excludedCategories.push('Videos');
+          if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
+        }
+      }
+
       let query = supabase.from('content').select('*').order('created_at', { ascending: false });
+
+      if (excludedCategories.length > 0) {
+        query = query.not('category', 'in', `(${excludedCategories.map(c => `"${c}"`).join(',')})`);
+      }
 
       if (currentCategory !== 'Home') {
         query = query.eq('category', currentCategory);

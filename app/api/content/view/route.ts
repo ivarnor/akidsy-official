@@ -1,5 +1,7 @@
+// app/api/content/view/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 
 export async function POST(req: Request) {
     try {
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
         // Fetch current views
         const { data: content, error: fetchError } = await supabaseAdmin
             .from('content')
-            .select('views')
+            .select('*')
             .eq('id', id)
             .single();
 
@@ -38,6 +40,35 @@ export async function POST(req: Request) {
         if (updateError) {
             console.error('Error updating views:', updateError);
             return NextResponse.json({ error: 'Failed to update views' }, { status: 500 });
+        }
+
+        // --- Activity Log Logic ---
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+            // Get current profile
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('activity_log')
+                .eq('id', user.id)
+                .single();
+
+            const currentLog = Array.isArray(profile?.activity_log) ? profile.activity_log : [];
+            const newEntry = {
+                id: content.id,
+                title: content.title,
+                category: content.category,
+                timestamp: new Date().toISOString()
+            };
+
+            // Keep only the last 20 activities max to prevent bloat
+            const updatedLog = [...currentLog, newEntry].slice(-20);
+
+            await supabaseAdmin
+                .from('profiles')
+                .update({ activity_log: updatedLog })
+                .eq('id', user.id);
         }
 
         return NextResponse.json({ success: true, views: (content.views || 0) + 1 });
