@@ -155,14 +155,14 @@ export default async function SalesPage({
             <p className="text-xl text-navy/90 font-medium">See what your kids will be exploring!</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-5xl mx-auto">
             {[
               "/images/promo/Ebook promo image sales page.png",
               "/images/promo/Education promo image sales page.png",
               "/images/promo/Videos promo image sales page.png",
               "/images/promo/coloring books promo image sales page.png"
             ].map((src, i) => (
-              <div key={i} className={`relative aspect-[43/24] rounded-3xl border-4 border-navy shadow-[6px_6px_0px_0px_#1C304A] overflow-hidden bg-white ${i % 2 === 0 ? 'md:translate-y-8' : ''}`}>
+              <div key={i} className="relative aspect-[43/24] rounded-3xl border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A] overflow-hidden bg-white">
                 <Image
                   src={src}
                   alt="App preview"
