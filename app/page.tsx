@@ -80,13 +80,13 @@ export default async function SalesPage({
         <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
           <div className="order-2 md:order-1 relative h-[400px] rounded-3xl border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A] overflow-hidden">
             <Image
-              src="https://picsum.photos/800/800?random=2"
+              src="/images/promo/Main promo image.png"
               alt="Happy child learning"
               fill
-              className="object-cover"
-              referrerPolicy="no-referrer"
+              className="object-cover rounded-2xl"
+              priority
             />
-            <div className="absolute -bottom-6 -right-6 bg-sunshine p-6 rounded-full border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A]">
+            <div className="absolute -bottom-6 -right-6 bg-sunshine p-6 rounded-full border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] z-10">
               <Heart className="w-12 h-12 text-navy fill-navy" />
             </div>
           </div>
@@ -156,14 +156,18 @@ export default async function SalesPage({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {[3, 4, 5, 6].map((num, i) => (
+            {[
+              "/images/promo/Ebook promo image sales page.png",
+              "/images/promo/Education promo image sales page.png",
+              "/images/promo/Videos promo image sales page.png",
+              "/images/promo/coloring books promo image sales page.png"
+            ].map((src, i) => (
               <div key={i} className={`relative aspect-square rounded-3xl border-4 border-navy shadow-[6px_6px_0px_0px_#1C304A] overflow-hidden ${i % 2 === 0 ? 'md:translate-y-8' : ''}`}>
                 <Image
-                  src={`https://picsum.photos/600/600?random=${num}`}
+                  src={src}
                   alt="App preview"
                   fill
-                  className="object-cover hover:scale-110 transition-transform duration-500"
-                  referrerPolicy="no-referrer"
+                  className="object-cover rounded-2xl hover:scale-110 transition-transform duration-500"
                 />
               </div>
             ))}
