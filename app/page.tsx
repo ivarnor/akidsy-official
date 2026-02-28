@@ -78,12 +78,12 @@ export default async function SalesPage({
       {/* Problem / Solution Section */}
       <section className="bg-white py-24 border-y-4 border-navy">
         <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-          <div className="order-2 md:order-1 relative h-[400px] rounded-3xl border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A] overflow-hidden">
+          <div className="order-2 md:order-1 relative h-[400px] rounded-3xl border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A] overflow-hidden bg-white">
             <Image
               src="/images/promo/Main promo image.png"
               alt="Happy child learning"
               fill
-              className="object-cover rounded-2xl"
+              className="object-cover transition-transform duration-700 hover:scale-105"
               priority
             />
             <div className="absolute -bottom-6 -right-6 bg-sunshine p-6 rounded-full border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] z-10">
@@ -162,12 +162,12 @@ export default async function SalesPage({
               "/images/promo/Videos promo image sales page.png",
               "/images/promo/coloring books promo image sales page.png"
             ].map((src, i) => (
-              <div key={i} className={`relative aspect-square rounded-3xl border-4 border-navy shadow-[6px_6px_0px_0px_#1C304A] overflow-hidden ${i % 2 === 0 ? 'md:translate-y-8' : ''}`}>
+              <div key={i} className={`relative aspect-square rounded-3xl border-4 border-navy shadow-[6px_6px_0px_0px_#1C304A] overflow-hidden bg-white ${i % 2 === 0 ? 'md:translate-y-8' : ''}`}>
                 <Image
                   src={src}
                   alt="App preview"
                   fill
-                  className="object-cover rounded-2xl hover:scale-110 transition-transform duration-500"
+                  className="object-cover hover:scale-110 transition-transform duration-500"
                 />
               </div>
             ))}
