@@ -12,6 +12,7 @@ function LoginContent() {
     const [error, setError] = useState<string | null>(null);
     const [isSignUp, setIsSignUp] = useState(false);
     const [isEmailSent, setIsEmailSent] = useState(false);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
     const supabase = createClient();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -23,6 +24,24 @@ function LoginContent() {
             setIsSignUp(true);
         }
     }, [searchParams]);
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setIsEmailSent(false);
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: 'https://www.akidsy.com/auth/reset-password',
+        });
+
+        if (error) {
+            setError(error.message);
+        } else {
+            setIsEmailSent(true);
+        }
+        setLoading(false);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,18 +104,20 @@ function LoginContent() {
                     <div>
                         <h1 className="text-4xl font-extrabold tracking-tight">Welcome to Akidsy</h1>
                         <p className="font-bold text-navy/60 mt-2">
-                            {isSignUp ? "Create an account to continue" : "Log in to continue"}
+                            {isForgotPassword
+                                ? "Reset your password"
+                                : isSignUp ? "Create an account to continue" : "Log in to continue"}
                         </p>
                     </div>
                 </header>
 
                 <main className="bg-white border-4 border-navy rounded-[2.5rem] p-8 shadow-[10px_10px_0px_0px_#1C304A]">
-                    {searchParams.get('message') && !isSignUp && (
+                    {searchParams.get('message') && !isSignUp && !isForgotPassword && (
                         <div className="bg-sunshine/20 border-2 border-sunshine text-navy p-4 rounded-xl font-bold text-sm mb-6 text-center">
                             {searchParams.get('message')}
                         </div>
                     )}
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={isForgotPassword ? handleResetPassword : handleSubmit} className="space-y-6">
                         <div className="space-y-2">
                             <label className="font-extrabold text-lg flex items-center gap-2">
                                 <Mail className="w-5 h-5 text-sky" /> Email
@@ -111,19 +132,36 @@ function LoginContent() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="font-extrabold text-lg flex items-center gap-2">
-                                <Lock className="w-5 h-5 text-persimmon" /> Password
-                            </label>
-                            <input
-                                required
-                                type="password"
-                                placeholder="••••••••"
-                                className="w-full p-4 rounded-2xl border-4 border-navy bg-cream focus:outline-none focus:ring-4 focus:ring-sunshine/50 transition-all font-bold placeholder:text-navy/20"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
+                        {!isForgotPassword && (
+                            <div className="space-y-2">
+                                <label className="font-extrabold text-lg flex items-center gap-2">
+                                    <Lock className="w-5 h-5 text-persimmon" /> Password
+                                </label>
+                                <input
+                                    required
+                                    type="password"
+                                    placeholder="••••••••"
+                                    className="w-full p-4 rounded-2xl border-4 border-navy bg-cream focus:outline-none focus:ring-4 focus:ring-sunshine/50 transition-all font-bold placeholder:text-navy/20"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                {!isSignUp && (
+                                    <div className="flex justify-end mt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsForgotPassword(true);
+                                                setError(null);
+                                                setIsEmailSent(false);
+                                            }}
+                                            className="text-sm font-bold text-sky hover:text-navy transition-colors"
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {error && (
                             <div className="bg-red-50 border-2 border-red-500 text-red-600 p-4 rounded-xl font-bold text-sm">
@@ -133,7 +171,9 @@ function LoginContent() {
 
                         {isEmailSent && (
                             <div className="bg-green-50 border-2 border-green-500 text-green-700 p-4 rounded-xl font-bold text-sm text-center">
-                                Registration successful! Please check your email to confirm your account.
+                                {isForgotPassword
+                                    ? "Password reset link sent! Please check your email."
+                                    : "Registration successful! Please check your email to confirm your account."}
                             </div>
                         )}
 
@@ -147,8 +187,8 @@ function LoginContent() {
                                     <Loader2 className="w-8 h-8 animate-spin" />
                                 ) : (
                                     <>
-                                        {isSignUp ? "Sign Up" : "Log In"}
-                                        {isSignUp ? <UserPlus className="w-6 h-6" /> : <LogIn className="w-6 h-6" />}
+                                        {isForgotPassword ? "Send Reset Link" : isSignUp ? "Sign Up" : "Log In"}
+                                        {!isForgotPassword && (isSignUp ? <UserPlus className="w-6 h-6" /> : <LogIn className="w-6 h-6" />)}
                                     </>
                                 )}
                             </button>
@@ -156,13 +196,19 @@ function LoginContent() {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setIsSignUp(!isSignUp);
+                                    if (isForgotPassword) {
+                                        setIsForgotPassword(false);
+                                    } else {
+                                        setIsSignUp(!isSignUp);
+                                    }
                                     setError(null);
                                     setIsEmailSent(false);
                                 }}
                                 className="text-navy font-bold hover:underline transition-all text-sm mt-2"
                             >
-                                {isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
+                                {isForgotPassword
+                                    ? "Back to Log In"
+                                    : isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
                             </button>
 
                             <div className="relative my-4 flex items-center py-2">
