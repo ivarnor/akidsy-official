@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/src/utils/supabase/client';
 import { PlayCircle, Star, Sparkles, Loader2, Compass, BookOpen } from 'lucide-react';
+import { PdfViewerModal } from '@/src/components/PdfViewerModal';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -13,6 +14,7 @@ function DashboardContent() {
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPdf, setSelectedPdf] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
 
   useEffect(() => {
     async function fetchContent() {
@@ -132,7 +134,12 @@ function DashboardContent() {
                               body: JSON.stringify({ id: item.id })
                             }).catch(console.error);
                           } catch (e) { }
-                          window.open(item.url, '_blank');
+
+                          if (item.category === 'Coloring books') {
+                            setSelectedPdf({ url: item.url, title: item.title });
+                          } else {
+                            window.open(item.url, '_blank');
+                          }
                         }
                       }}
                       className="w-full bg-sunshine text-navy font-black text-xl py-4 rounded-2xl border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] hover:bg-sunshine/90 transition-all active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 group/btn"
@@ -163,6 +170,12 @@ function DashboardContent() {
           </div>
         )}
       </div>
+
+      <PdfViewerModal
+        url={selectedPdf.url}
+        title={selectedPdf.title}
+        onClose={() => setSelectedPdf({ url: null, title: '' })}
+      />
     </div>
   );
 }
