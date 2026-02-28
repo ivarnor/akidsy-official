@@ -135,12 +135,15 @@ export default function AdminPage() {
         const isContent = type === 'content';
         const setUploading = isContent ? setContentUploading : setThumbnailUploading;
 
+        let bucket = 'content-assets';
         let folder = 'content';
+
         if (isContent) {
             const cat = formData.category.toLowerCase().replace(/\s+/g, '-');
             folder = cat;
         } else {
-            folder = 'thumbnails';
+            bucket = 'thumbnails';
+            folder = 'covers';
         }
 
         setUploading(true);
@@ -151,7 +154,7 @@ export default function AdminPage() {
             const filePath = `${folder}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('content-assets')
+                .from(bucket)
                 .upload(filePath, file, {
                     cacheControl: '3600',
                     upsert: false
@@ -160,7 +163,7 @@ export default function AdminPage() {
             if (uploadError) throw uploadError;
 
             const { data } = supabase.storage
-                .from('content-assets')
+                .from(bucket)
                 .getPublicUrl(filePath);
 
             const publicUrl = data.publicUrl;
@@ -172,7 +175,7 @@ export default function AdminPage() {
 
         } catch (err: any) {
             console.error(err);
-            alert(`Magic failed: ${err.message || 'Make sure the "content-assets" bucket exists and is public!'}`);
+            alert(`Magic failed: ${err.message || `Make sure the "${bucket}" bucket exists and is public!`}`);
         } finally {
             setUploading(false);
         }
@@ -221,24 +224,20 @@ export default function AdminPage() {
         try {
             // 1. Delete associated files from Storage
             if (itemToDelete) {
-                const filesToRemove: string[] = [];
+                const extractPath = (url: string, bucketName: string) => url?.split(`/${bucketName}/`)[1]?.split('?')[0];
 
-                const extractPath = (url: string) => url?.split('/content-assets/')[1]?.split('?')[0];
+                const contentPath = extractPath(itemToDelete.url, 'content-assets');
+                const thumbPath = extractPath(itemToDelete.thumbnail_url, 'thumbnails') || extractPath(itemToDelete.thumbnail_url, 'content-assets'); // Fallback for old items
 
-                const contentPath = extractPath(itemToDelete.url);
-                const thumbPath = extractPath(itemToDelete.thumbnail_url);
-
-                if (contentPath) filesToRemove.push(contentPath);
-                if (thumbPath) filesToRemove.push(thumbPath);
-
-                if (filesToRemove.length > 0) {
-                    const { error: storageError } = await supabase.storage
-                        .from('content-assets')
-                        .remove(filesToRemove);
-
-                    if (storageError) {
-                        console.error("Storage delete error:", storageError);
-                    }
+                if (contentPath) {
+                    const { error } = await supabase.storage.from('content-assets').remove([contentPath]);
+                    if (error) console.error("Content storage delete error:", error);
+                }
+                if (thumbPath) {
+                    // Determine which bucket it was in by checking the URL string
+                    const bucket = itemToDelete.thumbnail_url?.includes('/thumbnails/') ? 'thumbnails' : 'content-assets';
+                    const { error } = await supabase.storage.from(bucket).remove([thumbPath]);
+                    if (error) console.error("Thumbnail storage delete error:", error);
                 }
             }
 

@@ -41,6 +41,19 @@ function DashboardContent() {
     fetchContent();
   }, [currentCategory, supabase]);
 
+  const getCategoryDetails = (cat: string) => {
+    switch (cat) {
+      case 'Coloring books': return { title: "🎨 Let's Color!", icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
+      case 'eBooks': return { title: "📚 Story Time!", textIcon: "📚" };
+      case 'Puzzles': return { title: "🧩 Brain Teasers!", textIcon: "🧩" };
+      case 'Videos': return { title: "🎬 Movie Magic!", icon: <PlayCircle className="w-8 h-8 text-persimmon" /> };
+      case 'Home': return { title: "Discover New Stuffs", icon: <Compass className="w-8 h-8 text-sky" /> };
+      default: return { title: cat, icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
+    }
+  };
+
+  const catDetails = getCategoryDetails(currentCategory);
+
   return (
     <div className="space-y-12 pb-20">
       {/* Hero Banner */}
@@ -68,11 +81,9 @@ function DashboardContent() {
       <div>
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-extrabold text-navy flex items-center gap-3">
-            {currentCategory === 'Home' ? (
-              <><Compass className="w-8 h-8 text-sky" /> Discover New Stuffs</>
-            ) : (
-              <><Star className="w-8 h-8 text-sunshine fill-sunshine" /> {currentCategory}</>
-            )}
+            {catDetails.icon}
+            {catDetails.textIcon && <span className="text-3xl">{catDetails.textIcon}</span>}
+            {catDetails.title}
           </h2>
           {currentCategory === 'Home' && items.length > 0 && (
             <span className="bg-navy text-white text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest border-2 border-navy shadow-[2px_2px_0px_0px_#1C304A]">
@@ -87,20 +98,37 @@ function DashboardContent() {
             <p className="font-bold text-navy/60">Scouting the area for treasures...</p>
           </div>
         ) : items.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
             {items.map((item) => (
-              <div
+              <button
                 key={item.id}
-                className="group bg-white border-4 border-navy rounded-[2.5rem] overflow-hidden shadow-[8px_8px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col"
+                onClick={async () => {
+                  if (item.url) {
+                    try {
+                      fetch('/api/content/view', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: item.id })
+                      }).catch(console.error);
+                    } catch (e) { }
+
+                    if (item.category === 'Coloring books') {
+                      setSelectedPdf({ url: item.url, title: item.title });
+                    } else {
+                      window.open(item.url, '_blank');
+                    }
+                  }
+                }}
+                className="group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none outline-none focus-visible:ring-4 ring-sky ring-offset-2"
               >
-                {/* Thumbnail Area */}
-                <div className="aspect-video relative overflow-hidden bg-cream border-b-4 border-navy">
+                {/* Thumbnail Area - Book Cover style */}
+                <div className="aspect-[4/5] relative overflow-hidden bg-cream border-b-4 border-navy w-full">
                   {item.thumbnail_url ? (
                     <Image
                       src={item.thumbnail_url}
                       alt={item.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
@@ -108,51 +136,31 @@ function DashboardContent() {
                       <Sparkles className="w-12 h-12 text-sky/30" />
                     </div>
                   )}
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-white text-navy text-xs font-black px-3 py-1.5 rounded-full border-2 border-navy shadow-[2px_2px_0px_0px_#1C304A] uppercase tracking-tighter">
+
+                  {/* Category Badge */}
+                  <div className="absolute top-3 left-3 z-20">
+                    <span className="bg-white text-navy text-[10px] md:text-xs font-black px-2.5 py-1 md:py-1.5 rounded-full border-2 border-navy shadow-[2px_2px_0px_0px_#1C304A] uppercase tracking-tighter">
                       {item.category}
                     </span>
+                  </div>
+
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-navy/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
+                    <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
+                      {item.category === 'Videos' ? (
+                        <PlayCircle className="w-10 h-10 text-persimmon" />
+                      ) : (
+                        <BookOpen className="w-10 h-10 text-sky" />
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Info Area */}
-                <div className="p-6 flex-1 flex flex-col">
-                  <h3 className="text-2xl font-black text-navy mb-2 line-clamp-1">{item.title}</h3>
-                  <p className="text-navy/70 font-bold mb-6 line-clamp-2 text-sm leading-relaxed">
-                    {item.description || "Grab your map and start exploring this amazing content!"}
-                  </p>
-
-                  <div className="mt-auto">
-                    <button
-                      onClick={async () => {
-                        if (item.url) {
-                          try {
-                            // Track view without blocking navigation
-                            fetch('/api/content/view', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ id: item.id })
-                            }).catch(console.error);
-                          } catch (e) { }
-
-                          if (item.category === 'Coloring books') {
-                            setSelectedPdf({ url: item.url, title: item.title });
-                          } else {
-                            window.open(item.url, '_blank');
-                          }
-                        }
-                      }}
-                      className="w-full bg-sunshine text-navy font-black text-xl py-4 rounded-2xl border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] hover:bg-sunshine/90 transition-all active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 group/btn"
-                    >
-                      {item.category === 'Videos' ? (
-                        <><PlayCircle className="w-6 h-6 group-hover/btn:scale-110 transition-transform" /> Play Now</>
-                      ) : (
-                        <><BookOpen className="w-6 h-6 group-hover/btn:scale-110 transition-transform" /> Open Now</>
-                      )}
-                    </button>
-                  </div>
+                <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20">
+                  <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">{item.title}</h3>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
