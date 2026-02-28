@@ -318,9 +318,9 @@ export default async function SalesPage({
             Akidsy
           </div>
           <div className="flex gap-6 font-medium text-white/70">
-            <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Contact Us</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
           </div>
           <div className="text-white/50 text-sm">
             © {new Date().getFullYear()} Akidsy. All rights reserved.

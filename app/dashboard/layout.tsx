@@ -1,4 +1,5 @@
 import DashboardHeader from '@/src/components/DashboardHeader';
+import Link from 'next/link';
 
 import { createClient } from '@/src/utils/supabase/server';
 import { redirect } from 'next/navigation';
@@ -33,8 +34,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto py-8 bg-navy text-white/50 text-center font-bold text-sm border-t-4 border-navy">
-        <p>© {new Date().getFullYear()} Akidsy • Happy Exploring! ✨</p>
+      <footer className="mt-auto py-8 bg-navy text-white/50 text-center text-sm border-t-4 border-navy flex flex-col items-center gap-4">
+        <div className="flex gap-6 font-bold text-white/50">
+          <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        </div>
+        <p className="font-bold">© {new Date().getFullYear()} Akidsy • Happy Exploring! ✨</p>
       </footer>
     </div>
   );
