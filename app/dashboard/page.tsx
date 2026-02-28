@@ -122,7 +122,19 @@ function DashboardContent() {
 
                   <div className="mt-auto">
                     <button
-                      onClick={() => item.url && window.open(item.url, '_blank')}
+                      onClick={async () => {
+                        if (item.url) {
+                          try {
+                            // Track view without blocking navigation
+                            fetch('/api/content/view', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: item.id })
+                            }).catch(console.error);
+                          } catch (e) { }
+                          window.open(item.url, '_blank');
+                        }
+                      }}
                       className="w-full bg-sunshine text-navy font-black text-xl py-4 rounded-2xl border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] hover:bg-sunshine/90 transition-all active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2 group/btn"
                     >
                       {item.category === 'Videos' ? (

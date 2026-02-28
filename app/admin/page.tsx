@@ -2,18 +2,38 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
-import { Sparkles, Trash2, PlusCircle, Loader2, Upload, Link as LinkIcon, FileCheck, AlertCircle, FileText } from 'lucide-react';
-
+import {
+    Sparkles, Trash2, PlusCircle, Loader2, Upload, Link as LinkIcon,
+    FileCheck, AlertCircle, FileText, TrendingUp, Users, CreditCard,
+    AlertTriangle, Activity, Eye, MailWarning
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type ContentItem = {
-    id: string; // Changed from number to string to match UUID
+    id: string;
     title: string;
     category: string;
-    url: string; // Changed from content_url to match DB
+    url: string;
     description: string;
     thumbnail_url: string;
     created_at: string;
+    views: number;
+};
+
+type RevenueStats = {
+    mrr: number;
+    totalRevenue30d: number;
+    chartData: { date: string, revenue: number }[];
+};
+
+type HealthStats = {
+    activeTrials: number;
+    churnRate: number;
+    signupsThisMonth: number;
+    cancellationsThisMonth: number;
+    unverifiedUsers: { id: string, email: string, created_at: string }[];
+    topContent: { id: string, title: string, category: string, views: number }[];
 };
 
 export default function AdminPage() {
@@ -24,8 +44,8 @@ export default function AdminPage() {
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     // Dashboard Stats State
-    const [totalUsers, setTotalUsers] = useState<number>(0);
-    const [recentSignups, setRecentSignups] = useState<any[]>([]);
+    const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
+    const [healthStats, setHealthStats] = useState<HealthStats | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
 
     const router = useRouter();
@@ -37,7 +57,7 @@ export default function AdminPage() {
     const [formData, setFormData] = useState({
         title: '',
         category: 'Videos',
-        url: '', // Changed from content_url to match DB
+        url: '',
         description: '',
         thumbnail_url: '',
     });
@@ -58,36 +78,31 @@ export default function AdminPage() {
                 setUser(session.user);
                 setIsAuthorized(true);
                 fetchItems();
-                fetchStats();
+                fetchDashboardData();
             }
         };
         checkUser();
     }, []);
 
-    async function fetchStats() {
+    async function fetchDashboardData() {
         setStatsLoading(true);
         try {
-            // Get total count
-            const { count, error: countError } = await supabase
-                .from('profiles')
-                .select('*', { count: 'exact', head: true });
+            const [revRes, healthRes] = await Promise.all([
+                fetch('/api/admin/stats/revenue'),
+                fetch('/api/admin/stats/health')
+            ]);
 
-            if (!countError && count !== null) {
-                setTotalUsers(count);
+            if (revRes.ok) {
+                const revData = await revRes.json();
+                setRevenueStats(revData);
+            }
+            if (healthRes.ok) {
+                const healthData = await healthRes.json();
+                setHealthStats(healthData);
             }
 
-            // Get recent signups
-            const { data: recentUsers, error: recentError } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(5);
-
-            if (!recentError && recentUsers) {
-                setRecentSignups(recentUsers);
-            }
         } catch (err) {
-            console.error('Error fetching stats:', err);
+            console.error('Error fetching dashboard stats:', err);
         } finally {
             setStatsLoading(false);
         }
@@ -119,7 +134,6 @@ export default function AdminPage() {
         const isContent = type === 'content';
         const setUploading = isContent ? setContentUploading : setThumbnailUploading;
 
-        // Use category-specific folders for content, "thumbnails" for icons
         let folder = 'content';
         if (isContent) {
             const cat = formData.category.toLowerCase().replace(/\s+/g, '-');
@@ -150,7 +164,6 @@ export default function AdminPage() {
 
             const publicUrl = data.publicUrl;
 
-            // Auto-fill the form
             setFormData(prev => ({
                 ...prev,
                 [isContent ? 'url' : 'thumbnail_url']: publicUrl
@@ -176,7 +189,6 @@ export default function AdminPage() {
             if (error) {
                 alert('Error saving treasure: ' + error.message);
             } else {
-                // Reset Form
                 setFormData({
                     title: '',
                     category: 'Videos',
@@ -185,6 +197,7 @@ export default function AdminPage() {
                     thumbnail_url: '',
                 });
                 fetchItems();
+                fetchDashboardData(); // Refresh top content
                 alert('Treasure added successfully! ✨');
             }
         } catch (err: any) {
@@ -215,14 +228,14 @@ export default function AdminPage() {
 
     if (isAuthorized === false) {
         return (
-            <div className="min-h-screen bg-cream flex items-center justify-center p-6 font-sans text-navy">
-                <div className="max-w-md w-full bg-white border-4 border-navy rounded-[2.5rem] p-8 shadow-[10px_10px_0px_0px_#1C304A] text-center">
-                    <AlertCircle className="w-16 h-16 text-persimmon mx-auto mb-4" />
-                    <h1 className="text-3xl font-extrabold mb-2">403 Forbidden</h1>
-                    <p className="font-bold text-navy/60 mb-8">You do not have permission to access the Magic Admin Portal.</p>
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 font-sans text-slate-200">
+                <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl text-center">
+                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h1 className="text-3xl font-extrabold mb-2 text-white">403 Forbidden</h1>
+                    <p className="font-medium text-slate-400 mb-8">Access to the Control Center is restricted.</p>
                     <button
                         onClick={() => router.push('/')}
-                        className="w-full bg-sky text-white font-black py-4 rounded-2xl border-4 border-navy hover:bg-sky/90 transition-all shadow-[4px_4px_0px_0px_#1C304A] active:scale-95"
+                        className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all active:scale-95"
                     >
                         Return Home
                     </button>
@@ -232,107 +245,229 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="min-h-screen bg-cream p-6 md:p-12 font-sans text-navy">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-slate-950 p-6 md:p-12 font-sans text-slate-300">
+            <div className="max-w-6xl mx-auto space-y-10">
+
                 {/* Header */}
-                <header className="flex items-center gap-4 mb-8">
-                    <div className="bg-sunshine p-3 rounded-2xl border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A]">
-                        <Sparkles className="w-8 h-8 text-navy fill-navy" />
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-blue-600/20 p-3 rounded-xl border border-blue-500/30">
+                            <Activity className="w-8 h-8 text-blue-500" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight text-white">
+                                Control Center
+                            </h1>
+                            <p className="text-sm text-slate-500 font-medium mt-1 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Authenticated as {user?.email}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-                            Magic Admin Portal
-                        </h1>
-                        <p className="font-bold text-navy/60 mt-1 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            Logged in as: {user?.email}
-                        </p>
-                    </div>
-                    <div className="ml-auto flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => router.push('/dashboard')}
-                            className="bg-cream border-4 border-navy text-navy p-3 rounded-2xl shadow-[4px_4px_0px_0px_#1C304A] hover:bg-sky/20 transition-all font-black text-xs uppercase flex items-center gap-2"
+                            className="bg-slate-900 border border-slate-700 text-slate-300 px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all font-semibold text-sm flex items-center gap-2"
                         >
-                            Member Dashboard <LinkIcon className="w-4 h-4" />
+                            Member Site <LinkIcon className="w-4 h-4" />
                         </button>
                         <button
                             onClick={async () => {
                                 await supabase.auth.signOut();
                                 router.push('/login');
                             }}
-                            className="bg-white border-4 border-navy p-3 rounded-2xl shadow-[4px_4px_0px_0px_#1C304A] hover:bg-cream transition-all font-black text-xs uppercase"
+                            className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-sm"
                         >
                             Log Out
                         </button>
                     </div>
                 </header>
 
-                {/* Dashboard Stats */}
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    <div className="bg-sky text-white border-4 border-navy rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_#1C304A] flex flex-col justify-center relative overflow-hidden">
-                        <div className="relative z-10">
-                            <h3 className="font-black text-sm uppercase tracking-wider opacity-80 mb-1">Total Users</h3>
-                            <div className="flex items-baseline gap-3">
-                                <span className="text-6xl font-extrabold tracking-tighter">
-                                    {statsLoading ? <Loader2 className="w-10 h-10 animate-spin inline" /> : totalUsers}
-                                </span>
-                            </div>
-                        </div>
-                        <Sparkles className="w-32 h-32 absolute -right-6 -bottom-6 opacity-20 fill-white" />
-                    </div>
-
-                    <div className="bg-white border-4 border-navy rounded-[2rem] p-6 shadow-[6px_6px_0px_0px_#1C304A]">
-                        <h3 className="font-black text-sm uppercase tracking-wider text-navy/60 mb-4 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 text-persimmon" />
-                            Recent Signups
-                        </h3>
-                        {statsLoading ? (
-                            <div className="flex justify-center p-4">
-                                <Loader2 className="w-6 h-6 animate-spin text-sky" />
-                            </div>
-                        ) : recentSignups.length > 0 ? (
-                            <ul className="space-y-3">
-                                {recentSignups.map((user, idx) => (
-                                    <li key={idx} className="flex items-center justify-between text-sm font-bold border-b-2 border-dashed border-navy/10 pb-2 last:border-0">
-                                        <span className="truncate mr-4">{user.email || 'Unknown Email'}</span>
-                                        <span className="text-xs text-navy/40 shrink-0 bg-cream px-2 py-1 rounded-full border-2 border-navy">
-                                            {new Date(user.created_at).toLocaleDateString()}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm font-bold opacity-50 italic">No recent signups found.</p>
-                        )}
-                    </div>
+                {/* KPI Cards */}
+                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <DashboardCard
+                        title="Monthly Recurring Revenue"
+                        value={statsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : `$${revenueStats?.mrr.toLocaleString() || 0}`}
+                        icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
+                        trend={revenueStats?.mrr ? "+Active" : "Calculating"}
+                    />
+                    <DashboardCard
+                        title="30-Day Revenue"
+                        value={statsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : `$${revenueStats?.totalRevenue30d.toLocaleString() || 0}`}
+                        icon={<CreditCard className="w-5 h-5 text-blue-400" />}
+                    />
+                    <DashboardCard
+                        title="Active Trials"
+                        value={statsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : healthStats?.activeTrials || 0}
+                        icon={<Sparkles className="w-5 h-5 text-purple-400" />}
+                    />
+                    <DashboardCard
+                        title="Est. Monthly Churn"
+                        value={statsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : `${healthStats?.churnRate || 0}%`}
+                        icon={<AlertTriangle className="w-5 h-5 text-amber-400" />}
+                        trend={`${healthStats?.cancellationsThisMonth || 0} cancels this month`}
+                    />
                 </section>
 
-                {/* Upload Form */}
-                <section className="bg-white border-4 border-navy rounded-[2rem] p-8 shadow-[8px_8px_0px_0px_#1C304A] mb-12">
-                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                        <PlusCircle className="w-6 h-6 text-sky" />
-                        Add New Treasure
-                    </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Revenue Chart */}
+                    <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
+                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-blue-500" />
+                            Revenue Overview (30 Days)
+                        </h3>
+                        <div className="h-[300px] w-full">
+                            {statsLoading ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={revenueStats?.chartData || []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                        <XAxis
+                                            dataKey="date"
+                                            stroke="#64748b"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickMargin={10}
+                                        />
+                                        <YAxis
+                                            stroke="#64748b"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => `$${value}`}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }}
+                                            itemStyle={{ color: '#bae6fd' }}
+                                            labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
+                                            formatter={(value) => [`$${value}`, 'Revenue']}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="revenue"
+                                            stroke="#3b82f6"
+                                            strokeWidth={3}
+                                            dot={{ r: 0 }}
+                                            activeDot={{ r: 6, fill: '#3b82f6', stroke: '#0f172a', strokeWidth: 2 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Title & Category Row */}
+                    {/* Engagement / Top Content */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col">
+                        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <Eye className="w-5 h-5 text-purple-500" />
+                            Top Content (Engagement)
+                        </h3>
+                        {statsLoading ? (
+                            <div className="h-full flex items-center justify-center py-10">
+                                <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
+                            </div>
+                        ) : healthStats?.topContent && healthStats.topContent.length > 0 ? (
+                            <div className="space-y-4">
+                                {healthStats.topContent.map((item, idx) => (
+                                    <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 transition-colors">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="truncate">
+                                                <p className="text-sm font-semibold text-white truncate">{item.title}</p>
+                                                <p className="text-xs text-slate-500">{item.category}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs font-mono font-medium text-slate-400 bg-slate-900 px-2 py-1 rounded-md border border-slate-700 shrink-0">
+                                            {item.views} views
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="h-full flex items-center justify-center p-6 text-center">
+                                <p className="text-slate-500 text-sm">No engagement data yet.<br />Content views will appear here.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* System Health / Unverified Users */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                        <MailWarning className="w-5 h-5 text-amber-500" />
+                        Action Needed: Unverified Emails
+                    </h3>
+                    {statsLoading ? (
+                        <div className="flex justify-center p-10">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
+                        </div>
+                    ) : healthStats?.unverifiedUsers && healthStats.unverifiedUsers.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {healthStats.unverifiedUsers.map((u) => (
+                                <div key={u.id} className="bg-slate-800/50 border border-slate-700 p-4 rounded-xl flex flex-col gap-2">
+                                    <span className="text-sm font-medium text-white break-all">{u.email}</span>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-500">{new Date(u.created_at).toLocaleDateString()}</span>
+                                        <button
+                                            onClick={() => navigator.clipboard.writeText(u.email)}
+                                            className="text-xs font-medium text-blue-400 hover:text-blue-300"
+                                        >
+                                            Copy Email
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-10 border-2 border-dashed border-slate-800 rounded-xl text-center">
+                            <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <FileCheck className="w-6 h-6 text-emerald-500" />
+                            </div>
+                            <p className="text-white font-medium">All clear!</p>
+                            <p className="text-slate-500 text-sm">Every user has verified their email address.</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Content Manager Separator */}
+                <div className="pt-8 pb-4">
+                    <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                        Content Management
+                        <span className="h-px flex-1 bg-slate-800 ml-4"></span>
+                    </h2>
+                </div>
+
+                {/* Upload Form - Dark Theme */}
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-lg">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                        <PlusCircle className="w-5 h-5 text-blue-500" />
+                        Upload New Content
+                    </h3>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="flex flex-col gap-2">
-                                <label className="font-extrabold text-lg">Treasure Name</label>
+                                <label className="text-sm font-semibold text-slate-400">Title</label>
                                 <input
                                     required
                                     type="text"
                                     placeholder="e.g. The Brave Lion's Den"
-                                    className="p-4 rounded-2xl border-4 border-navy bg-cream focus:outline-none focus:ring-4 focus:ring-sunshine/50 transition-all font-bold placeholder:text-navy/30"
+                                    className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 />
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <label className="font-extrabold text-lg">Category</label>
+                                <label className="text-sm font-semibold text-slate-400">Category</label>
                                 <select
-                                    className="p-4 rounded-2xl border-4 border-navy bg-cream focus:outline-none focus:ring-4 focus:ring-sunshine/50 transition-all font-black appearance-none cursor-pointer"
+                                    className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm appearance-none cursor-pointer"
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 >
@@ -345,113 +480,93 @@ export default function AdminPage() {
                             </div>
                         </div>
 
-                        {/* Description Field */}
                         <div className="flex flex-col gap-2">
-                            <label className="font-extrabold text-lg">Short Secret description</label>
+                            <label className="text-sm font-semibold text-slate-400">Description</label>
                             <textarea
-                                rows={3}
-                                placeholder="Describe this treasure..."
-                                className="p-4 rounded-2xl border-4 border-navy bg-cream focus:outline-none focus:ring-4 focus:ring-sunshine/50 transition-all font-bold placeholder:text-navy/30"
+                                rows={2}
+                                placeholder="Brief description..."
+                                className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm resize-none"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             />
                         </div>
 
-                        {/* Content Upload & URL */}
-                        <div className="bg-cream/30 p-8 rounded-[2rem] border-4 border-dashed border-navy/20 space-y-4">
-                            <label className="font-extrabold text-lg flex items-center gap-2">
-                                <Upload className="w-5 h-5 text-sky" />
-                                Content {(formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '(PDF or Image)' : '(Video/Link)'}
-                            </label>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Content Upload */}
+                            <div className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 space-y-4">
+                                <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                                    <Upload className="w-4 h-4 text-blue-500" />
+                                    Source Data {(formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '(PDF or Image)' : '(Video/Link)'}
+                                </label>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* File Upload Box */}
-                                <div
-                                    className={`flex flex-col items-center justify-center p-6 border-4 border-navy rounded-2xl bg-white shadow-[4px_4px_0px_0px_#1C304A] cursor-pointer hover:bg-cream/50 transition-all relative ${contentUploading ? 'opacity-50 pointer-events-none' : ''}`}
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept={(formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '.pdf,image/*' : 'video/*,image/*'}
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) uploadFile(file, 'content');
-                                        }}
-                                    />
-                                    {contentUploading ? (
-                                        <Loader2 className="w-10 h-10 animate-spin text-persimmon" />
-                                    ) : formData.url ? (
-                                        <div className="flex flex-col items-center gap-2 text-sky font-bold uppercase text-xs">
-                                            <FileCheck className="w-10 h-10" />
-                                            File Uploaded!
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 opacity-40 font-bold text-center">
-                                            <Upload className="w-8 h-8" />
-                                            <span className="text-sm">Click to upload file</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* URL Input (Auto-filled or manual) */}
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-3">
+                                    <div
+                                        className={`flex items-center justify-center p-4 border border-slate-700 border-dashed rounded-lg bg-slate-900 cursor-pointer hover:bg-slate-800 transition-all relative ${contentUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            accept={(formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '.pdf,image/*' : 'video/*,image/*'}
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) uploadFile(file, 'content');
+                                            }}
+                                        />
+                                        {contentUploading ? (
+                                            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                                        ) : formData.url ? (
+                                            <span className="text-sm text-emerald-400 font-medium flex items-center gap-2"><FileCheck className="w-4 h-4" /> Uploaded</span>
+                                        ) : (
+                                            <span className="text-sm text-slate-400">Click to select file</span>
+                                        )}
+                                    </div>
                                     <input
                                         required
                                         type="url"
-                                        placeholder="Or paste external URL here..."
-                                        className="w-full h-full p-4 rounded-2xl border-4 border-navy bg-white focus:outline-none font-bold text-sm"
+                                        placeholder="Or paste direct URL..."
+                                        className="w-full p-3 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-mono"
                                         value={formData.url}
                                         onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                                     />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Thumbnail Upload & URL */}
-                        <div className="bg-cream/30 p-8 rounded-[2rem] border-4 border-dashed border-navy/20 space-y-4">
-                            <label className="font-extrabold text-lg flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-sunshine" /> Cool Card Image
-                            </label>
+                            {/* Thumbnail Upload */}
+                            <div className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 space-y-4">
+                                <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-purple-500" />
+                                    Thumbnail Image
+                                </label>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* File Upload Box */}
-                                <div
-                                    className={`flex flex-col items-center justify-center p-6 border-4 border-navy rounded-2xl bg-white shadow-[4px_4px_0px_0px_#1C304A] cursor-pointer hover:bg-cream/50 transition-all ${thumbnailUploading ? 'opacity-50 pointer-events-none' : ''}`}
-                                    onClick={() => thumbInputRef.current?.click()}
-                                >
-                                    <input
-                                        type="file"
-                                        ref={thumbInputRef}
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) uploadFile(file, 'thumbnail');
-                                        }}
-                                    />
-                                    {thumbnailUploading ? (
-                                        <Loader2 className="w-10 h-10 animate-spin text-persimmon" />
-                                    ) : formData.thumbnail_url ? (
-                                        <div className="flex flex-col items-center gap-2 text-sunshine font-bold uppercase text-xs">
-                                            <FileCheck className="w-10 h-10" />
-                                            Thumbnail Ready!
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-2 opacity-40 font-bold text-center">
-                                            <Upload className="w-8 h-8" />
-                                            <span className="text-sm">Click for card image</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* URL Input */}
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-3">
+                                    <div
+                                        className={`flex items-center justify-center p-4 border border-slate-700 border-dashed rounded-lg bg-slate-900 cursor-pointer hover:bg-slate-800 transition-all ${thumbnailUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                                        onClick={() => thumbInputRef.current?.click()}
+                                    >
+                                        <input
+                                            type="file"
+                                            ref={thumbInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) uploadFile(file, 'thumbnail');
+                                            }}
+                                        />
+                                        {thumbnailUploading ? (
+                                            <Loader2 className="w-5 h-5 animate-spin text-purple-500" />
+                                        ) : formData.thumbnail_url ? (
+                                            <span className="text-sm text-emerald-400 font-medium flex items-center gap-2"><FileCheck className="w-4 h-4" /> Uploaded</span>
+                                        ) : (
+                                            <span className="text-sm text-slate-400">Click to select image</span>
+                                        )}
+                                    </div>
                                     <input
                                         type="url"
-                                        placeholder="Paste thumbnail URL here..."
-                                        className="w-full h-full p-4 rounded-2xl border-4 border-navy bg-white focus:outline-none font-bold text-sm"
+                                        placeholder="Or paste direct image URL..."
+                                        className="w-full p-3 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-mono"
                                         value={formData.thumbnail_url}
                                         onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
                                     />
@@ -459,114 +574,114 @@ export default function AdminPage() {
                             </div>
                         </div>
 
-                        {/* Submit Row */}
-                        <div className="pt-4">
+                        <div className="pt-2">
                             <button
                                 disabled={formSubmitting || contentUploading || thumbnailUploading}
                                 type="submit"
-                                className="w-full bg-persimmon text-white font-black text-3xl py-6 rounded-[2.5rem] border-4 border-navy hover:bg-persimmon/90 transition-all hover:scale-[1.01] active:scale-95 shadow-[8px_8px_0px_0px_#1C304A] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-4 group"
+                                className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
                             >
                                 {formSubmitting ? (
-                                    <Loader2 className="w-10 h-10 animate-spin" />
+                                    <Loader2 className="w-5 h-5 animate-spin" />
                                 ) : (
-                                    <>Save New Treasure! <Sparkles className="w-8 h-8 group-hover:rotate-12 transition-transform" /></>
+                                    <>Publish Content</>
                                 )}
                             </button>
                         </div>
                     </form>
                 </section>
 
-                {/* Library View */}
+                {/* Library View - Dark Theme */}
                 <section>
-                    <h2 className="text-3xl font-extrabold mb-8 flex items-center gap-4">
-                        Current Library
-                        <span className="bg-sky text-white text-base font-black py-2 px-6 rounded-full border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A]">
-                            {items.length} ✨
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            Content Library
+                        </h2>
+                        <span className="bg-slate-800 text-slate-300 text-xs font-bold py-1 px-3 rounded-md border border-slate-700">
+                            {items.length} items
                         </span>
-                    </h2>
+                    </div>
 
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center p-20 gap-4">
-                            <Loader2 className="w-16 h-16 animate-spin text-sky" />
-                            <p className="font-bold opacity-40">Consulting the scroll...</p>
+                        <div className="flex justify-center p-20 border border-slate-800 rounded-2xl bg-slate-900/50">
+                            <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
                             {items.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="bg-white border-4 border-navy rounded-[2.5rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] flex flex-col group hover:-translate-y-2 transition-all duration-300 cursor-default"
+                                    className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col group hover:border-slate-600 transition-colors"
                                 >
-                                    <div className="h-48 relative overflow-hidden bg-cream border-b-4 border-navy">
+                                    <div className="h-32 relative overflow-hidden bg-slate-950 border-b border-slate-800">
                                         <img
                                             src={item.thumbnail_url}
                                             alt={item.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/37B6F6/1C304A?text=Explorer+Preview';
+                                                (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/0f172a/1e293b?text=No+Preview';
                                             }}
                                         />
-                                        <div className="absolute top-4 left-4 bg-sunshine text-navy font-black px-4 py-1.5 rounded-full border-2 border-navy text-xs shadow-[2px_2px_0px_0px_#1C304A] uppercase tracking-tighter">
+                                        <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-slate-300 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider border border-slate-700">
                                             {item.category}
                                         </div>
                                     </div>
 
-                                    <div className="p-6 flex-1 flex flex-col">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            {item.category === 'Coloring books' ? <FileText className="w-5 h-5 text-persimmon" /> : null}
-                                            <h3 className="text-2xl font-black line-clamp-1">{item.title}</h3>
-                                        </div>
-                                        <p className="text-navy/40 text-xs font-bold font-mono truncate mb-6 pb-2 border-b-2 border-dashed border-navy/10">
+                                    <div className="p-4 flex-1 flex flex-col">
+                                        <h3 className="text-sm font-bold text-white line-clamp-1 mb-1" title={item.title}>{item.title}</h3>
+                                        <p className="text-xs text-slate-500 font-mono truncate mb-4">
                                             {item.url}
                                         </p>
 
-                                        <button
-                                            onClick={() => handleDelete(item.id)}
-                                            className="mt-auto w-full bg-cream text-navy font-black py-4 rounded-2xl border-4 border-navy hover:bg-persimmon hover:text-white transition-all flex items-center justify-center gap-2 group/del active:scale-95"
-                                        >
-                                            <Trash2 className="w-6 h-6 group-hover/del:animate-bounce" />
-                                            Remove Treasure
-                                        </button>
+                                        <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-800">
+                                            <span className="text-[10px] text-slate-500 font-medium">
+                                                {new Date(item.created_at).toLocaleDateString()}
+                                            </span>
+                                            <button
+                                                onClick={() => handleDelete(item.id)}
+                                                className="text-slate-500 hover:text-red-400 transition-colors"
+                                                title="Delete Content"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
 
                             {items.length === 0 && (
-                                <div className="md:col-span-2 bg-cream/30 border-4 border-dashed border-navy/20 rounded-[3rem] p-24 text-center">
-                                    <Compass className="w-20 h-20 text-navy/10 mx-auto mb-6" />
-                                    <p className="text-3xl font-black text-navy/20 italic">
-                                        The library is waiting for treasure! 🗝️
-                                    </p>
+                                <div className="md:col-span-3 xl:col-span-4 border border-slate-800 border-dashed rounded-2xl p-16 text-center bg-slate-900/50">
+                                    <p className="text-slate-500 font-medium">Library is empty.</p>
                                 </div>
                             )}
                         </div>
                     )}
                 </section>
 
-                <footer className="mt-20 py-10 text-center opacity-30 font-black text-xs uppercase tracking-[0.2em]">
-                    Akidsy Admin Command Center • magic in progress
+                <footer className="pt-10 pb-6 text-center text-slate-600 text-xs font-semibold">
+                    System Control Center • Restricted Access
                 </footer>
             </div>
         </div>
     );
 }
 
-function Compass(props: any) {
+function DashboardCard({ title, value, icon, trend }: { title: string, value: React.ReactNode, icon: React.ReactNode, trend?: string }) {
     return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-        </svg>
-    )
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm hover:border-slate-700 transition-colors">
+            <div className="flex items-start justify-between mb-4">
+                <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    {icon}
+                </div>
+            </div>
+            <div>
+                <h3 className="text-sm font-medium text-slate-400 mb-1">{title}</h3>
+                <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+                {trend && (
+                    <p className="text-xs font-medium text-slate-500 mt-2 mt-auto pt-2 border-t border-slate-800/50">
+                        {trend}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
 }

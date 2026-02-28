@@ -55,6 +55,9 @@ function LoginContent() {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    data: {
+                        referrer: typeof document !== 'undefined' ? document.referrer : ''
+                    }
                 }
             });
 
