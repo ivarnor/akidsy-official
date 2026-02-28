@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single();
 
-  if (!profile?.is_member && profile?.subscription_status !== 'trialing' && profile?.subscription_status !== 'active') {
+  if (!profile?.is_member) {
     redirect('/?message=Please join the club to see this content!');
   }
 
