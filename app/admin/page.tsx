@@ -63,6 +63,11 @@ export default function AdminPage() {
         thumbnail_url: '',
     });
 
+    // Bulk JSON State
+    const [bulkJson, setBulkJson] = useState('');
+    const [bulkUploading, setBulkUploading] = useState(false);
+    const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+
     const supabase = createClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const thumbInputRef = useRef<HTMLInputElement>(null);
@@ -217,6 +222,65 @@ export default function AdminPage() {
             alert('Unexpected error: ' + err.message);
         } finally {
             setFormSubmitting(false);
+        }
+    }
+
+    async function handleBulkSubmit(e: React.FormEvent) {
+        e.preventDefault();
+
+        try {
+            const parsedArray = JSON.parse(bulkJson);
+            if (!Array.isArray(parsedArray)) {
+                alert('Invalid format: The input must be a JSON array (starts with [ and ends with ]).');
+                return;
+            }
+
+            if (parsedArray.length === 0) {
+                alert('The JSON array is empty.');
+                return;
+            }
+
+            setBulkUploading(true);
+            setBulkProgress({ current: 0, total: parsedArray.length });
+
+            let successfulUploads = 0;
+
+            for (let i = 0; i < parsedArray.length; i++) {
+                const item = parsedArray[i];
+
+                // Set is_published to true explicitly for all bulk imports
+                const payload = {
+                    ...item,
+                    is_published: true
+                };
+
+                const { error } = await supabase
+                    .from('content')
+                    .insert([payload]);
+
+                if (error) {
+                    console.error(`Failed to insert item ${item.title || i}:`, error);
+                } else {
+                    successfulUploads++;
+                }
+
+                // Update UI progress
+                setBulkProgress({ current: i + 1, total: parsedArray.length });
+            }
+
+            // Cleanup & notify
+            setBulkJson('');
+            fetchItems();
+            fetchDashboardData();
+
+            alert(`Bulk import complete! Successfully added ${successfulUploads} of ${parsedArray.length} items. ✨`);
+
+        } catch (err: any) {
+            console.error('JSON Parse Error:', err);
+            alert('Invalid JSON: Please check that your array is formatted correctly. \nDetails: ' + err.message);
+        } finally {
+            setBulkUploading(false);
+            setBulkProgress({ current: 0, total: 0 });
         }
     }
 
@@ -631,6 +695,58 @@ export default function AdminPage() {
                                     <Loader2 className="w-5 h-5 animate-spin" />
                                 ) : (
                                     <>Publish Content</>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                {/* Bulk JSON Importer */}
+                <section className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-lg">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-indigo-500" />
+                        Bulk JSON Importer
+                    </h3>
+                    <form onSubmit={handleBulkSubmit} className="space-y-4">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-semibold text-slate-400">
+                                Paste JSON Array
+                                <span className="text-xs text-slate-500 font-normal ml-2">
+                                    [ {"{"} "title": "Lion Coloring", "category": "coloring_books", ... {"}"} ]
+                                </span>
+                            </label>
+                            <textarea
+                                required
+                                rows={8}
+                                placeholder='[
+  {
+    "title": "Example Content",
+    "category": "coloring_books",
+    "url": "https://...",
+    "thumbnail_url": "https://..."
+  }
+]'
+                                className="w-full p-4 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm font-mono whitespace-pre resize-y"
+                                value={bulkJson}
+                                onChange={(e) => setBulkJson(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                disabled={bulkUploading || !bulkJson.trim()}
+                                type="submit"
+                                className="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20"
+                            >
+                                {bulkUploading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span>
+                                            Importing {bulkProgress.current} of {bulkProgress.total}... ⏳
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>Process Bulk Upload</>
                                 )}
                             </button>
                         </div>
