@@ -58,6 +58,7 @@ export default function AdminPage() {
     const [formData, setFormData] = useState({
         title: '',
         category: 'Videos',
+        sub_category: '',
         url: '',
         description: '',
         thumbnail_url: '',
@@ -210,6 +211,7 @@ export default function AdminPage() {
                 setFormData({
                     title: '',
                     category: 'Videos',
+                    sub_category: '',
                     url: '',
                     description: '',
                     thumbnail_url: '',
@@ -562,7 +564,7 @@ export default function AdminPage() {
                     </h3>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-semibold text-slate-400">Title</label>
                                 <input
@@ -587,6 +589,21 @@ export default function AdminPage() {
                                     <option>Ebooks</option>
                                     <option>Puzzles</option>
                                     <option>Education</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-semibold text-slate-400">Sub-Category (Optional)</label>
+                                <select
+                                    className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm appearance-none cursor-pointer disabled:opacity-50"
+                                    value={formData.sub_category}
+                                    onChange={(e) => setFormData({ ...formData, sub_category: e.target.value })}
+                                    disabled={formData.category !== 'Coloring books'}
+                                >
+                                    <option value="">None</option>
+                                    <option value="animals">Animals</option>
+                                    <option value="space">Space</option>
+                                    <option value="vehicles">Vehicles</option>
                                 </select>
                             </div>
                         </div>
