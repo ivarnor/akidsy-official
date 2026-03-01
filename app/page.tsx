@@ -216,6 +216,50 @@ export default async function SalesPage({
         </div>
       </section>
 
+      {/* Parental Trust Section */}
+      <section className="py-24 bg-sky/20 px-4">
+        <div className="max-w-3xl mx-auto text-center font-medium leading-relaxed text-navy text-lg space-y-8">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-navy mb-8 leading-tight">
+            More Than Just a Screen—<br className="max-md:hidden" /> A Digital Playground Built for Growth
+          </h2>
+
+          <p className="text-xl">
+            In a world full of &quot;brain-rot&quot; content and addictive algorithms, finding a digital space you can actually trust feels like a challenge. You want your child to be engaged, but you also want them to be safe. At Akidsy, we believe technology should be a tool for creativity, not just a source of passive consumption.
+          </p>
+
+          <div className="space-y-6 text-left p-8 md:p-12 bg-white rounded-[2.5rem] border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A]">
+            <div>
+              <h3 className="text-2xl font-extrabold text-navy flex items-center gap-3 mb-3">
+                <Star className="text-sunshine fill-sunshine w-7 h-7 flex-shrink-0" />
+                Peace of Mind for You, Pure Magic for Them
+              </h3>
+              <p>
+                Every coloring book they finish, every puzzle they solve, and every video they watch has been hand-selected to spark curiosity and build confidence. There are no &quot;hidden&quot; costs here, no aggressive marketing directed at your children, and absolutely zero third-party ads. When your child is on Akidsy, they are in a protected world designed specifically for their development.
+              </p>
+            </div>
+
+            <div className="pt-4">
+              <h3 className="text-2xl font-extrabold text-navy flex items-center gap-3 mb-3">
+                <CheckCircle2 className="text-sky fill-sky/20 w-7 h-7 flex-shrink-0" />
+                Take Back Your Afternoon
+              </h3>
+              <p>
+                Whether you need thirty minutes to focus on work, prep dinner, or simply enjoy a hot cup of coffee, you can hand over the tablet with zero guilt. You aren&apos;t just giving them a screen; you&apos;re giving them a curated library of educational adventures. It&apos;s the quiet time you need, backed by the quality they deserve.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 italic text-xl font-bold">
+            &quot;We built Akidsy because we believe every child deserves a digital space that inspires them, and every parent deserves the peace of mind to let them explore it. Thank you for letting us be a part of your family&apos;s journey.&quot;
+            <div className="not-italic text-sky mt-4">— The Akidsy Team 🚀</div>
+          </div>
+
+          <div className="pt-8 text-2xl font-extrabold text-navy">
+            Ready to start your family&apos;s new favorite tradition?
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing-section" className="py-24 bg-white border-y-4 border-navy scroll-mt-6">
         <div className="max-w-6xl mx-auto px-4 text-center">
