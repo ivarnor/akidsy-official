@@ -81,7 +81,7 @@ export default async function SalesPage({
           <div className="order-2 md:order-1 relative w-full aspect-[43/24] rounded-3xl border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A] overflow-hidden bg-white">
             <Image
               src="/images/promo/Main promo image.png"
-              alt="Happy child learning"
+              alt="Happy child learning and playing with the Akidsy educational app"
               fill
               className="object-cover transition-transform duration-700 hover:scale-105"
               priority
@@ -157,15 +157,15 @@ export default async function SalesPage({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-5xl mx-auto">
             {[
-              "/images/promo/Ebook promo image sales page.png",
-              "/images/promo/Education promo image sales page.png",
-              "/images/promo/Videos promo image sales page.png",
-              "/images/promo/coloring books promo image sales page.png"
-            ].map((src, i) => (
+              { src: "/images/promo/Ebook promo image sales page.png", alt: "Interactive educational ebooks for early childhood reading" },
+              { src: "/images/promo/Education promo image sales page.png", alt: "Structured learning paths and educational games for kids" },
+              { src: "/images/promo/Videos promo image sales page.png", alt: "Ad-free educational videos teaching math and science" },
+              { src: "/images/promo/coloring books promo image sales page.png", alt: "Printable coloring books for developing fine motor skills" }
+            ].map((item, i) => (
               <div key={i} className="relative aspect-[43/24] rounded-3xl border-4 border-navy shadow-[8px_8px_0px_0px_#1C304A] overflow-hidden bg-white">
                 <Image
-                  src={src}
-                  alt="App preview"
+                  src={item.src}
+                  alt={item.alt}
                   fill
                   className="object-cover hover:scale-110 transition-transform duration-500"
                 />

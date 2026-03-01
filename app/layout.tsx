@@ -9,8 +9,11 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: 'Akidsy - Creative Explorer',
-  description: 'A fun and secure membership platform for kids.',
+  title: 'Akidsy | Fun Educational Games, Videos & Coloring for Kids',
+  description: 'The #1 ad-free platform for kids. Discover thousands of interactive coloring books, educational videos, and puzzles designed for early childhood development.',
+  alternates: {
+    canonical: 'https://www.akidsy.com',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
