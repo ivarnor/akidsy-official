@@ -22,5 +22,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: new Date(),
             priority: 0.3,
         },
+        {
+            url: 'https://www.akidsy.com/dashboard/support',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
     ]
 }
