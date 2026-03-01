@@ -44,6 +44,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <span>•</span>
           <Link href="/account" className="hover:text-white transition-colors">Account</Link>
           <span>•</span>
+          <Link href="/dashboard/support" className="hover:text-white transition-colors">Support</Link>
+          <span>•</span>
           <Link href="/dashboard/parent" className="hover:text-white transition-colors flex items-center gap-1">
             <span aria-hidden="true">⚙️</span>
             Parent Dashboard
