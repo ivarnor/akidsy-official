@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Sparkles, PlayCircle, BookOpen, Puzzle, GraduationCap, Palette, CheckCircle2, Star, ShieldCheck, Heart, AlertCircle } from 'lucide-react';
 import { CheckoutButton } from '@/src/components/CheckoutButton';
 import { createClient } from '@/src/utils/supabase/server';
+import { FAQAccordion, FAQItem } from '@/src/components/FAQAccordion';
 
 export default async function SalesPage({
   searchParams,
@@ -14,6 +15,25 @@ export default async function SalesPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  const faqs: FAQItem[] = [
+    {
+      question: "Is Akidsy really ad-free?",
+      answer: "Yes! We believe a child's learning environment should be 100% safe. There are no third-party ads, no trackers, and no external links that could lead your child away from our protected space."
+    },
+    {
+      question: "Can I use my account on multiple devices?",
+      answer: "Absolutely. One membership covers your whole family. You can log in on your tablet, phone, and laptop so the fun never has to stop, whether you're at home or on the go."
+    },
+    {
+      question: "How often is new content added?",
+      answer: "We add fresh coloring books, educational videos, and puzzles every single week! Our library is constantly growing to keep your child engaged and excited to learn."
+    },
+    {
+      question: "How does the 7-day free trial work?",
+      answer: "You get full, unlimited access to everything Akidsy offers for 7 days. If you love it, stay subscribed! If not, you can cancel easily through your Parent Dashboard at any time before the trial ends, and you won't be charged."
+    }
+  ];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -48,6 +68,17 @@ export default async function SalesPage({
           "https://www.instagram.com/akidsy",
           "https://www.youtube.com/akidsy"
         ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(faq => ({
+          "@type": "Question",
+          "name": faq.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": faq.answer
+          }
+        }))
       }
     ]
   };
@@ -386,6 +417,18 @@ export default async function SalesPage({
             Start 7-Day Free Trial <Sparkles className="w-8 h-8" />
           </a>
           <p className="mt-6 text-navy font-bold text-lg">7-Day Free Trial • Cancel Anytime</p>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-24 bg-cream border-t-4 border-navy px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-navy mb-4">Have Questions? We&apos;ve Got Answers! ✨</h2>
+            <p className="text-xl text-navy/80 font-medium">Everything you need to know about the Akidsy experience.</p>
+          </div>
+
+          <FAQAccordion items={faqs} />
         </div>
       </section>
 
