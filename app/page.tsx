@@ -15,8 +15,49 @@ export default async function SalesPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Akidsy",
+        "operatingSystem": "Web-based",
+        "applicationCategory": "EducationApplication",
+        "description": "Educational platform for kids featuring coloring books, videos, and puzzles.",
+        "offers": [
+          {
+            "@type": "Offer",
+            "price": "27.00",
+            "priceCurrency": "USD",
+            "name": "Monthly Explorer"
+          },
+          {
+            "@type": "Offer",
+            "price": "270.00",
+            "priceCurrency": "USD",
+            "name": "Yearly Explorer"
+          }
+        ]
+      },
+      {
+        "@type": "Organization",
+        "name": "Akidsy",
+        "url": "https://www.akidsy.com",
+        "sameAs": [
+          "https://www.facebook.com/akidsy",
+          "https://www.instagram.com/akidsy",
+          "https://www.youtube.com/akidsy"
+        ]
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-cream font-sans relative">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Banner Message (Always visible but changes text based on param) */}
       <div className="bg-persimmon text-white text-center p-4 font-bold border-b-4 border-navy flex justify-center items-center gap-2">
         <AlertCircle className="w-6 h-6" />
