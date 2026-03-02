@@ -15,6 +15,6 @@ export const config = {
          * - api (API routes, except webhooks which may be protected depending on needs)
          * Feel free to modify this pattern to include more paths.
          */
-        '/((?!_next/static|_next/image|favicon.ico|api/webhooks/stripe|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ogg)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|api/webhooks/stripe|.*\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|ogg)$).*)',
     ],
 }
