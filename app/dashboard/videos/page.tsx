@@ -28,7 +28,7 @@ export default function VideosPage() {
                 }}
               >
                 <source
-                  src={`https://[YOUR_SUPABASE_PROJECT_REF].supabase.co/storage/v1/object/public/videos/sample-${i}.mp4`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/videos/sample-${i}.mp4`}
                   type="video/mp4"
                 />
               </video>
