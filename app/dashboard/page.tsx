@@ -27,16 +27,24 @@ function DashboardContent() {
       let excludedCategories: string[] = [];
 
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('show_coloring, show_videos, show_puzzles')
-          .eq('id', user.id)
-          .single();
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('show_coloring, show_videos, show_puzzles')
+            .eq('id', user.id)
+            .maybeSingle(); // Changed from .single() to .maybeSingle() to gracefully handle 0 rows
 
-        if (profile) {
-          if (profile.show_coloring === false) excludedCategories.push('Coloring books');
-          if (profile.show_videos === false) excludedCategories.push('Videos');
-          if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('Error fetching user profile preferences:', profileError);
+          }
+
+          if (profile) {
+            if (profile.show_coloring === false) excludedCategories.push('Coloring books');
+            if (profile.show_videos === false) excludedCategories.push('Videos');
+            if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
+          }
+        } catch (err) {
+          console.error('Unexpected error fetching profile details:', err);
         }
       }
 
