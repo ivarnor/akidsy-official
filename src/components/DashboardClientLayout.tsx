@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import Sidebar from './Sidebar';
+import { AppSidebar } from './AppSidebar';
 import MobileHeader from './MobileHeader';
+import { SidebarProvider } from "@/src/components/ui/sidebar"
 
 export default function DashboardClientLayout({
     children,
@@ -11,32 +11,27 @@ export default function DashboardClientLayout({
     children: React.ReactNode;
     footer: React.ReactNode;
 }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
     return (
-        <div className="min-h-screen flex font-sans bg-cream overflow-x-hidden">
-            {/* Sidebar Component handles its own desktop fixed & mobile drawer logic */}
-            <Sidebar
-                isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}
-            />
+        <SidebarProvider defaultOpen={true}>
+            <div className="min-h-screen flex w-full font-sans bg-cream overflow-x-hidden">
+                <AppSidebar />
 
-            {/* Main Content Wrapper - Flex container for side-by-side layout */}
-            <div className="flex-1 flex flex-col min-h-screen min-w-0 transition-all">
+                {/* Main Content Wrapper - Flex container for side-by-side layout */}
+                <div className="flex-1 flex flex-col min-h-screen min-w-0">
+                    {/* Mobile Header (Hidden on Desktop) */}
+                    <MobileHeader />
 
-                {/* Mobile Header (Hidden on Desktop) */}
-                <MobileHeader onOpenSidebar={() => setIsSidebarOpen(true)} />
+                    {/* Dashboard Main Content Area */}
+                    <main className="flex-1 p-6 md:p-8 lg:p-10 bg-slate-50 relative z-10 w-full">
+                        <div className="max-w-7xl mx-auto w-full">
+                            {children}
+                        </div>
+                    </main>
 
-                {/* Dashboard Main Content Area */}
-                <main className="flex-1 p-6 md:p-8 lg:p-10 bg-slate-50 relative z-10 w-full">
-                    <div className="max-w-7xl mx-auto w-full">
-                        {children}
-                    </div>
-                </main>
-
-                {/* Dynamic Footer rendered server-side */}
-                {footer}
+                    {/* Dynamic Footer rendered server-side */}
+                    {footer}
+                </div>
             </div>
-        </div>
+        </SidebarProvider>
     );
 }

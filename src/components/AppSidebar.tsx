@@ -16,23 +16,26 @@ import {
     X
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarHeader,
+    SidebarFooter,
+    useSidebar
+} from "@/src/components/ui/sidebar"
 
-interface SidebarProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function AppSidebar() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const categoryParams = searchParams.get('cat');
+    const { setOpenMobile } = useSidebar();
 
     const [isColoringOpen, setIsColoringOpen] = useState(false);
 
     // Close sidebar on route change on mobile
     useEffect(() => {
-        onClose();
-    }, [pathname, searchParams, onClose]);
+        setOpenMobile(false);
+    }, [pathname, searchParams, setOpenMobile]);
 
     // Keep coloring open if we are in a coloring sub-route or cat=Coloring
     useEffect(() => {
@@ -45,7 +48,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         if (cat) {
             return pathname === '/dashboard' && categoryParams === cat;
         }
-        // Strict match for Home so it doesn't stay highlighted when on other /dashboard routes
         if (path === '/dashboard') {
             return pathname === '/dashboard' && !categoryParams;
         }
@@ -64,26 +66,24 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             ? `${subNavItemClasses} bg-sky/20 text-sky-800 border-sky/30 shadow-[2px_2px_0px_0px_rgba(56,189,248,0.2)]`
             : `${subNavItemClasses} text-navy/80 border-transparent hover:bg-slate-100 hover:text-navy hover:border-slate-200`;
 
-    const SidebarContent = () => (
-        <div className="h-full flex flex-col bg-white">
-            {/* Header/Logo */}
-            <div className="h-20 px-6 flex items-center justify-between shrink-0 border-b-2 border-slate-100">
-                <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2" onClick={onClose}>
+    return (
+        <Sidebar collapsible="offcanvas" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
+            <SidebarHeader className="h-20 px-6 flex flex-row items-center justify-between shrink-0 border-b-2 border-slate-100 bg-white">
+                <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2" onClick={() => setOpenMobile(false)}>
                     <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
                     <span>Akidsy</span>
                 </Link>
                 {/* Mobile close button */}
                 <button
-                    onClick={onClose}
+                    onClick={() => setOpenMobile(false)}
                     className="lg:hidden p-2 text-navy hover:bg-slate-100 rounded-full transition-colors"
                     aria-label="Close menu"
                 >
                     <X className="w-6 h-6" />
                 </button>
-            </div>
+            </SidebarHeader>
 
-            {/* Navigation Links */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
+            <SidebarContent className="p-4 space-y-2 no-scrollbar bg-white">
                 <Link
                     href="/dashboard"
                     className={getLinkClasses(isActive('/dashboard'))}
@@ -180,10 +180,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </div>
                     </Link>
                 </div>
-            </nav>
+            </SidebarContent>
 
-            {/* Footer / Parent Zone */}
-            <div className="p-4 border-t-2 border-slate-100 shrink-0">
+            <SidebarFooter className="p-4 border-t-2 border-slate-100 shrink-0 bg-white">
                 <Link
                     href="/dashboard/parent"
                     className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl font-bold transition-all border-2 border-navy/10 text-navy hover:bg-slate-100 hover:border-navy/30 ${pathname.startsWith('/dashboard/parent') ? 'bg-slate-100 border-navy/30 shadow-inner' : ''}`}
@@ -191,32 +190,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <Lock className="w-5 h-5 text-navy/70" />
                     <span>Parent Zone</span>
                 </Link>
-            </div>
-        </div>
-    );
-
-    return (
-        <>
-            {/* Desktop Sidebar (Sticky) */}
-            <aside className="hidden lg:flex flex-col w-64 shrink-0 h-screen sticky top-0 z-[110] bg-white border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
-                <SidebarContent />
-            </aside>
-
-            {/* Mobile Drawer Overlay */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[100] bg-navy/50 backdrop-blur-sm lg:hidden transition-opacity"
-                    onClick={onClose}
-                />
-            )}
-
-            {/* Mobile Drawer Content */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-[101] w-4/5 max-w-[320px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
-                    }`}
-            >
-                <SidebarContent />
-            </aside>
-        </>
+            </SidebarFooter>
+        </Sidebar>
     );
 }
