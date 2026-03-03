@@ -14,6 +14,7 @@ type ContentItem = {
     id: string;
     title: string;
     category: string;
+    sub_category?: string;
     url: string;
     description: string;
     thumbnail_url: string;
@@ -802,7 +803,7 @@ export default function AdminPage() {
                                             }}
                                         />
                                         <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-slate-300 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider border border-slate-700">
-                                            {item.category}
+                                            {item.category}{item.sub_category ? ` - ${item.sub_category}` : ''}
                                         </div>
                                     </div>
 

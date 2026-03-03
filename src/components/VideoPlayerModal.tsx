@@ -14,19 +14,25 @@ interface VideoPlayerModalProps {
 }
 
 export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: VideoPlayerModalProps) {
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const videoNodeRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
     const [isEnded, setIsEnded] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!url || !videoRef.current) return;
+        if (!url || !videoNodeRef.current) return;
 
         setIsEnded(false);
         setLoading(true);
 
+        // Manually create the video element for React 18 / Video.js pattern
+        const videoElement = document.createElement("video-js");
+        videoElement.classList.add('vjs-big-play-centered', 'vjs-theme-city');
+        videoElement.setAttribute('playsinline', 'true');
+        videoNodeRef.current.appendChild(videoElement);
+
         // Initialize Video.js player
-        const player = videojs(videoRef.current, {
+        const player = videojs(videoElement, {
             controls: true,
             autoplay: 'muted', // Auto-play muted to bypass browser policies
             preload: 'auto',
@@ -104,12 +110,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                         </div>
                     )}
 
-                    <div data-vjs-player className="w-full h-full relative">
-                        <video
-                            ref={videoRef}
-                            className="video-js vjs-big-play-centered vjs-theme-city"
-                            playsInline
-                        />
+                    <div data-vjs-player className="w-full h-full relative" ref={videoNodeRef}>
                     </div>
 
                     {/* Next Video Overlay */}

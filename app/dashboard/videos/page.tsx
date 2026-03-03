@@ -20,7 +20,6 @@ export default function VideosPage() {
                 controls
                 preload="metadata"
                 playsInline
-                crossOrigin="anonymous"
                 controlsList="nodownload"
                 onError={(e) => {
                   const target = e.target as HTMLVideoElement;
