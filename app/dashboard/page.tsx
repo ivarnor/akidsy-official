@@ -141,23 +141,28 @@ function DashboardContent() {
                     if (item.category === 'Coloring books') {
                       setSelectedPdf({ url: item.url, title: item.title });
                     } else if (item.category === 'Videos') {
-                      // Videos are stored in a private bucket, we must generate a signed URL
-                      setFetchingSecureUrl(item.id);
-                      try {
-                        const { data, error } = await supabase.storage
-                          .from('videos')
-                          .createSignedUrl(item.url, 3600); // 1 Hour secure link
+                      if (item.url.startsWith('http')) {
+                        // Handle legacy public fully-qualified URLs
+                        setSelectedVideo({ url: item.url, title: item.title });
+                      } else {
+                        // Handle new private bucket URLs that need signing
+                        setFetchingSecureUrl(item.id);
+                        try {
+                          const { data, error } = await supabase.storage
+                            .from('videos')
+                            .createSignedUrl(item.url, 3600); // 1 Hour secure link
 
-                        if (error) {
-                          console.error("Error generating signed URL", error);
-                          alert("Sorry, we couldn't load this video right now.");
-                        } else if (data) {
-                          setSelectedVideo({ url: data.signedUrl, title: item.title });
+                          if (error) {
+                            console.error("Error generating signed URL", error);
+                            alert("Sorry, we couldn't load this video right now.");
+                          } else if (data) {
+                            setSelectedVideo({ url: data.signedUrl, title: item.title });
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        } finally {
+                          setFetchingSecureUrl(null);
                         }
-                      } catch (err) {
-                        console.error(err);
-                      } finally {
-                        setFetchingSecureUrl(null);
                       }
                     } else {
                       window.open(item.url, '_blank');
