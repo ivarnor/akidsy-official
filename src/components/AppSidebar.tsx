@@ -56,7 +56,7 @@ export function AppSidebar() {
         return pathname.startsWith(path);
     };
 
-    const isCollapsed = state === "collapsed";
+
 
     const navItemClasses = "flex items-center w-full px-4 py-3 rounded-2xl font-bold transition-all border-2";
     const getLinkClasses = (active: boolean) =>
@@ -71,33 +71,13 @@ export function AppSidebar() {
             : `${subNavItemClasses} text-navy/80 border-transparent hover:bg-slate-100 hover:text-navy hover:border-slate-200`;
 
     return (
-        <Sidebar collapsible="icon" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
-            <SidebarHeader className="h-20 px-4 flex flex-row items-center justify-between shrink-0 border-b-2 border-slate-100 bg-white overflow-hidden">
+        <Sidebar variant="sidebar" collapsible="icon" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
+            <SidebarHeader className="h-16 px-4 flex flex-row items-center justify-between shrink-0 border-b-2 border-slate-100 bg-white overflow-hidden">
                 <div className="flex items-center gap-2 overflow-hidden">
                     <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2 shrink-0" onClick={() => setOpenMobile(false)}>
                         <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
-                        {!isCollapsed && <span>Akidsy</span>}
+                        <span className="group-data-[collapsible=icon]:hidden">Akidsy</span>
                     </Link>
-                </div>
-
-                <div className="flex items-center gap-1">
-                    {/* Desktop Toggle Button */}
-                    <button
-                        onClick={toggleSidebar}
-                        className="hidden md:flex p-2 text-navy hover:bg-slate-100 rounded-full transition-colors"
-                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        {isCollapsed ? <Menu className="w-6 h-6" /> : <PanelLeft className="w-6 h-6" />}
-                    </button>
-
-                    {/* Mobile close button */}
-                    <button
-                        onClick={() => setOpenMobile(false)}
-                        className="md:hidden p-2 text-navy hover:bg-slate-100 rounded-full transition-colors"
-                        aria-label="Close menu"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
                 </div>
             </SidebarHeader>
 
@@ -109,46 +89,44 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Home className="w-6 h-6 shrink-0" />
-                        {!isCollapsed && <span>Home</span>}
+                        <span className="group-data-[collapsible=icon]:hidden">Home</span>
                     </div>
                 </Link>
 
                 {/* Coloring Books (Collapsible) */}
                 <div className="space-y-1">
                     <button
-                        onClick={() => !isCollapsed ? setIsColoringOpen(!isColoringOpen) : toggleSidebar()}
-                        className={`${getLinkClasses(categoryParams === 'Coloring' || pathname.includes('/dashboard/coloring'))} ${isColoringOpen && !isCollapsed ? 'mb-2' : ''}`}
+                        onClick={() => state !== "collapsed" ? setIsColoringOpen(!isColoringOpen) : toggleSidebar()}
+                        className={`${getLinkClasses(categoryParams === 'Coloring' || pathname.includes('/dashboard/coloring'))} group-data-[collapsible=icon]:mb-0 mb-2`}
                         title="Coloring Books"
                     >
                         <div className="flex items-center gap-3 shrink-0">
                             <Palette className="w-6 h-6 shrink-0" />
-                            {!isCollapsed && <span>Coloring Books</span>}
+                            <span className="group-data-[collapsible=icon]:hidden">Coloring Books</span>
                         </div>
-                        {!isCollapsed && <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isColoringOpen ? 'rotate-180' : ''}`} />}
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${isColoringOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    {!isCollapsed && (
-                        <div className={`overflow-hidden transition-all duration-200 ease-in-out pl-4 pr-2 space-y-1 ${isColoringOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
-                            <Link
-                                href="/dashboard/coloring/animals"
-                                className={getSubLinkClasses(pathname === '/dashboard/coloring/animals')}
-                            >
-                                <span className="text-xl leading-none">🦁</span> Animals
-                            </Link>
-                            <Link
-                                href="/dashboard/coloring/space"
-                                className={getSubLinkClasses(pathname === '/dashboard/coloring/space')}
-                            >
-                                <span className="text-xl leading-none">🚀</span> Space
-                            </Link>
-                            <Link
-                                href="/dashboard/coloring/vehicles"
-                                className={getSubLinkClasses(pathname === '/dashboard/coloring/vehicles')}
-                            >
-                                <span className="text-xl leading-none">🚗</span> Vehicles
-                            </Link>
-                        </div>
-                    )}
+                    <div className={`overflow-hidden transition-all duration-200 ease-in-out pl-4 pr-2 space-y-1 group-data-[collapsible=icon]:hidden ${isColoringOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <Link
+                            href="/dashboard/coloring/animals"
+                            className={getSubLinkClasses(pathname === '/dashboard/coloring/animals')}
+                        >
+                            <span className="text-xl leading-none">🦁</span> Animals
+                        </Link>
+                        <Link
+                            href="/dashboard/coloring/space"
+                            className={getSubLinkClasses(pathname === '/dashboard/coloring/space')}
+                        >
+                            <span className="text-xl leading-none">🚀</span> Space
+                        </Link>
+                        <Link
+                            href="/dashboard/coloring/vehicles"
+                            className={getSubLinkClasses(pathname === '/dashboard/coloring/vehicles')}
+                        >
+                            <span className="text-xl leading-none">🚗</span> Vehicles
+                        </Link>
+                    </div>
                 </div>
 
                 <Link
@@ -158,7 +136,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Tv className="w-6 h-6 shrink-0" />
-                        {!isCollapsed && <span>Videos</span>}
+                        <span className="group-data-[collapsible=icon]:hidden">Videos</span>
                     </div>
                 </Link>
 
@@ -169,7 +147,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Puzzle className="w-6 h-6 shrink-0" />
-                        {!isCollapsed && <span>Puzzles</span>}
+                        <span className="group-data-[collapsible=icon]:hidden">Puzzles</span>
                     </div>
                 </Link>
 
@@ -180,7 +158,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <BookOpen className="w-6 h-6 shrink-0" />
-                        {!isCollapsed && <span>Ebooks</span>}
+                        <span className="group-data-[collapsible=icon]:hidden">Ebooks</span>
                     </div>
                 </Link>
 
@@ -191,11 +169,11 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <GraduationCap className="w-6 h-6 shrink-0" />
-                        {!isCollapsed && <span>Education</span>}
+                        <span className="group-data-[collapsible=icon]:hidden">Education</span>
                     </div>
                 </Link>
 
-                <div className={`pt-4 mt-4 border-t-2 border-slate-100 ${isCollapsed ? 'hidden' : ''}`}>
+                <div className="pt-4 mt-4 border-t-2 border-slate-100 group-data-[collapsible=icon]:hidden">
                     <Link
                         href="/dashboard/support"
                         className={getLinkClasses(isActive('/dashboard/support'))}
@@ -203,7 +181,7 @@ export function AppSidebar() {
                     >
                         <div className="flex items-center gap-3 shrink-0">
                             <LifeBuoy className="w-6 h-6 shrink-0" />
-                            {!isCollapsed && <span>Support</span>}
+                            <span className="group-data-[collapsible=icon]:hidden">Support</span>
                         </div>
                     </Link>
                 </div>
@@ -216,7 +194,7 @@ export function AppSidebar() {
                     title="Parent Zone"
                 >
                     <Lock className="w-6 h-6 shrink-0 text-navy/70" />
-                    {!isCollapsed && <span>Parent Zone</span>}
+                    <span className="group-data-[collapsible=icon]:hidden">Parent Zone</span>
                 </Link>
             </SidebarFooter>
         </Sidebar>

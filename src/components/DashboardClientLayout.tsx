@@ -1,7 +1,7 @@
 'use client';
 
 import { AppSidebar } from './AppSidebar';
-import MobileHeader from './MobileHeader';
+import DashboardHeader from './MobileHeader';
 import { SidebarProvider } from "@/src/components/ui/sidebar"
 
 export default function DashboardClientLayout({
@@ -17,9 +17,9 @@ export default function DashboardClientLayout({
                 <AppSidebar />
 
                 {/* Main Content Wrapper - Flex container for side-by-side layout */}
-                <div className="flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ease-in-out">
-                    {/* Mobile Header (Hidden on Desktop) */}
-                    <MobileHeader />
+                <div className="flex-1 flex flex-col min-h-screen min-w-0 flex-shrink-0 transition-all duration-300 ease-in-out">
+                    {/* Persistent Dashboard Header with Sidebar Trigger */}
+                    <DashboardHeader />
 
                     {/* Dashboard Main Content Area */}
                     <main className="flex-1 p-6 md:p-8 lg:p-10 bg-slate-50 relative z-10 w-full">
