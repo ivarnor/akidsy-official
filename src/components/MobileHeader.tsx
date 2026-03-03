@@ -6,7 +6,7 @@ import { SidebarTrigger } from "@/src/components/ui/sidebar"
 
 export default function MobileHeader() {
     return (
-        <header className="lg:hidden sticky top-0 z-30 bg-white border-b-4 border-navy shadow-[0_4px_0_0_#1C304A]">
+        <header className="md:hidden sticky top-0 z-30 bg-white border-b-4 border-navy shadow-[0_4px_0_0_#1C304A]">
             <div className="px-4 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <SidebarTrigger className="-ml-2 text-navy" />

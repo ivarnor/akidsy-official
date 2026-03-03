@@ -67,7 +67,7 @@ export function AppSidebar() {
             : `${subNavItemClasses} text-navy/80 border-transparent hover:bg-slate-100 hover:text-navy hover:border-slate-200`;
 
     return (
-        <Sidebar collapsible="offcanvas" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
+        <Sidebar collapsible="none" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
             <SidebarHeader className="h-20 px-6 flex flex-row items-center justify-between shrink-0 border-b-2 border-slate-100 bg-white">
                 <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2" onClick={() => setOpenMobile(false)}>
                     <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
