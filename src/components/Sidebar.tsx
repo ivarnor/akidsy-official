@@ -197,26 +197,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     return (
         <>
-            {/* Desktop Sidebar (Fixed) */}
-            <div className="hidden lg:block fixed inset-y-0 left-0 z-40 w-[280px] bg-white border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
+            {/* Desktop Sidebar (Sticky) */}
+            <aside className="hidden lg:flex flex-col w-[280px] shrink-0 h-screen sticky top-0 z-[110] bg-white border-r-4 border-navy shadow-[4px_0_0_0_#1C304A]">
                 <SidebarContent />
-            </div>
+            </aside>
 
             {/* Mobile Drawer Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-navy/50 backdrop-blur-sm lg:hidden transition-opacity"
+                    className="fixed inset-0 z-[110] bg-navy/50 backdrop-blur-sm lg:hidden transition-opacity"
                     onClick={onClose}
                 />
             )}
 
             {/* Mobile Drawer Content */}
-            <div
-                className={`fixed inset-y-0 left-0 z-50 w-4/5 max-w-[320px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
+            <aside
+                className={`fixed inset-y-0 left-0 z-[120] w-4/5 max-w-[320px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
             >
                 <SidebarContent />
-            </div>
+            </aside>
         </>
     );
 }

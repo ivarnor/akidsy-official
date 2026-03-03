@@ -157,8 +157,10 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
             <style jsx global>{`
                 .video-js {
                     width: 100% !important;
+                    max-width: 100% !important;
                     height: 100% !important;
                     font-family: inherit;
+                    box-sizing: border-box !important;
                 }
                 .video-js .vjs-big-play-button {
                     background-color: var(--color-sunshine, #FFD166) !important;
