@@ -102,7 +102,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                 </div>
 
                 {/* Video Container */}
-                <div className="flex-1 w-full bg-black relative flex items-center justify-center overflow-hidden rounded-none md:rounded-[2rem] shadow-2xl mt-16 md:mt-0" onContextMenu={(e) => e.preventDefault()}>
+                <div className="flex-1 w-full max-w-full bg-black relative flex items-center justify-center overflow-hidden rounded-none md:rounded-[2rem] shadow-2xl mt-16 md:mt-0" onContextMenu={(e) => e.preventDefault()}>
 
                     {loading && (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
