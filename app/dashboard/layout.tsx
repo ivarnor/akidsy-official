@@ -1,4 +1,4 @@
-import DashboardHeader from '@/src/components/DashboardHeader';
+import DashboardClientLayout from '@/src/components/DashboardClientLayout';
 import Link from 'next/link';
 
 import { createClient } from '@/src/utils/supabase/server';
@@ -24,35 +24,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/?message=Please join the club to see this content!');
   }
 
+  const footerContent = (
+    <footer className="mt-auto py-8 bg-navy text-white/50 text-center text-sm flex flex-col items-center gap-4 relative z-10 w-full">
+      <div className="flex gap-4 md:gap-6 font-bold text-white/50 flex-wrap justify-center px-4">
+        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+        <span className="hidden sm:inline">•</span>
+        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        <span className="hidden sm:inline">•</span>
+        <Link href="/account" className="hover:text-white transition-colors">Account</Link>
+      </div>
+      <p className="font-bold">© {new Date().getFullYear()} Akidsy • Happy Exploring! ✨</p>
+    </footer>
+  );
+
   return (
-    <div className="min-h-screen bg-cream flex flex-col font-sans">
-      <DashboardHeader />
-
-      {/* Main Content Area */}
-      <main className="flex-1 p-6 md:p-10">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-auto py-8 bg-navy text-white/50 text-center text-sm border-t-4 border-navy flex flex-col items-center gap-4">
-        <div className="flex gap-6 font-bold text-white/50">
-          <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-          <span>•</span>
-          <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-          <span>•</span>
-          <Link href="/account" className="hover:text-white transition-colors">Account</Link>
-          <span>•</span>
-          <Link href="/dashboard/support" className="hover:text-white transition-colors">Support</Link>
-          <span>•</span>
-          <Link href="/dashboard/parent" className="hover:text-white transition-colors flex items-center gap-1">
-            <span aria-hidden="true">⚙️</span>
-            Parent Dashboard
-          </Link>
-        </div>
-        <p className="font-bold">© {new Date().getFullYear()} Akidsy • Happy Exploring! ✨</p>
-      </footer>
-    </div>
+    <DashboardClientLayout footer={footerContent}>
+      {children}
+    </DashboardClientLayout>
   );
 }
