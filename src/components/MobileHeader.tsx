@@ -9,7 +9,10 @@ export default function DashboardHeader() {
         <header className="sticky top-0 z-30 bg-white border-b-4 border-navy shadow-[0_4px_0_0_#1C304A] w-full">
             <div className="px-4 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <SidebarTrigger className="-ml-2 text-navy" />
+                    <SidebarTrigger
+                        className="-ml-2 text-navy relative z-[100] pointer-events-auto"
+                        onClick={() => console.log('Menu Clicked')}
+                    />
 
                     {/* Logo - Hidden on md+ because AppSidebar has it */}
                     <Link href="/dashboard" className="md:hidden text-xl font-bold text-navy flex items-center gap-2">
