@@ -174,7 +174,7 @@ export function AppSidebar() {
                     </div>
                 </Link>
 
-                <div className="pt-4 mt-4 border-t-2 border-slate-100 ${isCollapsed ? "hidden" : ""}">
+                <div className={`pt-4 mt-4 border-t-2 border-slate-100 ${isCollapsed ? "hidden" : ""}`}>
                     <Link
                         href="/dashboard/support"
                         className={getLinkClasses(isActive('/dashboard/support'))}
