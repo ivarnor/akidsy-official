@@ -11,7 +11,7 @@ export default function DashboardHeader() {
                 <div className="flex items-center gap-3">
                     <SidebarTrigger
                         className="-ml-2 text-navy relative z-[100] pointer-events-auto"
-                        onClick={() => console.log('Menu Clicked')}
+                        onClick={() => console.log('Sidebar Toggled')}
                     />
 
                     {/* Logo - Hidden on md+ because AppSidebar has it */}
