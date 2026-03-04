@@ -353,14 +353,15 @@ export default async function SalesPage({
 
               <ul className="space-y-4 text-left mb-10 mx-auto flex-1">
                 {[
-                  'Everything in Monthly',
-                  'Bonus Printables Package',
-                  'Early access to new features',
-                  'Priority parent support'
+                  { text: 'Everything in Monthly' },
+                  { text: '2 months free with the yearly', highlight: true },
+                  { text: 'Bonus Printables Package' },
+                  { text: 'Early access to new features' },
+                  { text: 'Priority parent support' }
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-lg font-bold text-navy">
-                    <CheckCircle2 className="w-6 h-6 text-persimmon fill-persimmon/20 shrink-0" />
-                    {item}
+                  <li key={i} className={`flex items-center gap-3 text-lg font-bold ${item.highlight ? 'text-persimmon text-xl' : 'text-navy'}`}>
+                    <CheckCircle2 className={`w-6 h-6 ${item.highlight ? 'text-persimmon fill-persimmon/20' : 'text-persimmon fill-persimmon/20'} shrink-0`} />
+                    {item.text}
                   </li>
                 ))}
               </ul>
