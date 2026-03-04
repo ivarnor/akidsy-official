@@ -31,6 +31,7 @@ export function AppSidebar() {
     const searchParams = useSearchParams();
     const categoryParams = searchParams.get('cat');
     const { setOpenMobile, state, toggleSidebar } = useSidebar();
+    const isCollapsed = state === "collapsed";
 
     const [isColoringOpen, setIsColoringOpen] = useState(false);
 
@@ -76,7 +77,7 @@ export function AppSidebar() {
                 <div className="flex items-center gap-2 overflow-hidden">
                     <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2 shrink-0" onClick={() => setOpenMobile(false)}>
                         <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
-                        <span className="group-data-[collapsible=icon]:hidden">Akidsy</span>
+                        <span className={isCollapsed ? "hidden" : ""}>Akidsy</span>
                     </Link>
                 </div>
             </SidebarHeader>
@@ -89,7 +90,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Home className="w-6 h-6 shrink-0" />
-                        <span className="group-data-[collapsible=icon]:hidden">Home</span>
+                        <span className={isCollapsed ? "hidden" : ""}>Home</span>
                     </div>
                 </Link>
 
@@ -97,17 +98,17 @@ export function AppSidebar() {
                 <div className="space-y-1">
                     <button
                         onClick={() => state !== "collapsed" ? setIsColoringOpen(!isColoringOpen) : toggleSidebar()}
-                        className={`${getLinkClasses(categoryParams === 'Coloring' || pathname.includes('/dashboard/coloring'))} group-data-[collapsible=icon]:mb-0 mb-2`}
+                        className={`${getLinkClasses(categoryParams === 'Coloring' || pathname.includes('/dashboard/coloring'))} ${isCollapsed ? "mb-0" : ""} mb-2`}
                         title="Coloring Books"
                     >
                         <div className="flex items-center gap-3 shrink-0">
                             <Palette className="w-6 h-6 shrink-0" />
-                            <span className="group-data-[collapsible=icon]:hidden">Coloring Books</span>
+                            <span className={isCollapsed ? "hidden" : ""}>Coloring Books</span>
                         </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 group-data-[collapsible=icon]:hidden ${isColoringOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "hidden" : ""} ${isColoringOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    <div className={`overflow-hidden transition-all duration-200 ease-in-out pl-4 pr-2 space-y-1 group-data-[collapsible=icon]:hidden ${isColoringOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className={`overflow-hidden transition-all duration-200 ease-in-out pl-4 pr-2 space-y-1 ${isCollapsed ? "hidden" : ""} ${isColoringOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
                         <Link
                             href="/dashboard/coloring/animals"
                             className={getSubLinkClasses(pathname === '/dashboard/coloring/animals')}
@@ -136,7 +137,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Tv className="w-6 h-6 shrink-0" />
-                        <span className="group-data-[collapsible=icon]:hidden">Videos</span>
+                        <span className={isCollapsed ? "hidden" : ""}>Videos</span>
                     </div>
                 </Link>
 
@@ -147,7 +148,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Puzzle className="w-6 h-6 shrink-0" />
-                        <span className="group-data-[collapsible=icon]:hidden">Puzzles</span>
+                        <span className={isCollapsed ? "hidden" : ""}>Puzzles</span>
                     </div>
                 </Link>
 
@@ -158,7 +159,7 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <BookOpen className="w-6 h-6 shrink-0" />
-                        <span className="group-data-[collapsible=icon]:hidden">Ebooks</span>
+                        <span className={isCollapsed ? "hidden" : ""}>Ebooks</span>
                     </div>
                 </Link>
 
@@ -169,11 +170,11 @@ export function AppSidebar() {
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <GraduationCap className="w-6 h-6 shrink-0" />
-                        <span className="group-data-[collapsible=icon]:hidden">Education</span>
+                        <span className={isCollapsed ? "hidden" : ""}>Education</span>
                     </div>
                 </Link>
 
-                <div className="pt-4 mt-4 border-t-2 border-slate-100 group-data-[collapsible=icon]:hidden">
+                <div className="pt-4 mt-4 border-t-2 border-slate-100 ${isCollapsed ? "hidden" : ""}">
                     <Link
                         href="/dashboard/support"
                         className={getLinkClasses(isActive('/dashboard/support'))}
@@ -181,7 +182,7 @@ export function AppSidebar() {
                     >
                         <div className="flex items-center gap-3 shrink-0">
                             <LifeBuoy className="w-6 h-6 shrink-0" />
-                            <span className="group-data-[collapsible=icon]:hidden">Support</span>
+                            <span className={isCollapsed ? "hidden" : ""}>Support</span>
                         </div>
                     </Link>
                 </div>
@@ -194,7 +195,7 @@ export function AppSidebar() {
                     title="Parent Zone"
                 >
                     <Lock className="w-6 h-6 shrink-0 text-navy/70" />
-                    <span className="group-data-[collapsible=icon]:hidden">Parent Zone</span>
+                    <span className={isCollapsed ? "hidden" : ""}>Parent Zone</span>
                 </Link>
             </SidebarFooter>
         </Sidebar>

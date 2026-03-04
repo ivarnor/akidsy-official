@@ -211,20 +211,21 @@ const Sidebar = React.forwardRef<
             >
                 {/* This is what handles the sidebar gap on desktop */}
                 <div
+                    style={{ width: state === "collapsed" ? (collapsible === "offcanvas" ? '0px' : 'var(--sidebar-width-icon)') : 'var(--sidebar-width)' }}
                     className={cn(
-                        "duration-300 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-in-out",
-                        "group-data-[collapsible=offcanvas]:w-0",
-                        "group-data-[side=right]:rotate-180",
-                        "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+                        "duration-300 relative h-svh bg-transparent transition-[width] ease-in-out",
+                        "group-data-[side=right]:rotate-180"
                     )}
                 />
                 <div
+                    style={{
+                        width: state === "collapsed" && collapsible === "icon" ? 'var(--sidebar-width-icon)' : 'var(--sidebar-width)',
+                        left: state === "collapsed" && collapsible === "offcanvas" && side === "left" ? 'calc(var(--sidebar-width) * -1)' : '0'
+                    }}
                     className={cn(
-                        "duration-300 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-in-out md:flex",
-                        side === "left"
-                            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-                            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-                        "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+                        "duration-300 fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] ease-in-out md:flex",
+                        side === "right" && "right-0",
+                        "group-data-[side=left]:border-r group-data-[side=right]:border-l",
                         className
                     )}
                     {...props}
