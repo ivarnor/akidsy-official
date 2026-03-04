@@ -47,13 +47,13 @@ export default async function SalesPage({
         "offers": [
           {
             "@type": "Offer",
-            "price": "27.00",
+            "price": "19.00",
             "priceCurrency": "USD",
             "name": "Monthly Explorer"
           },
           {
             "@type": "Offer",
-            "price": "270.00",
+            "price": "199.00",
             "priceCurrency": "USD",
             "name": "Yearly Explorer"
           }
@@ -303,7 +303,8 @@ export default async function SalesPage({
               <div className="mb-8 mt-4">
                 <h3 className="text-3xl font-extrabold text-navy mb-2">Monthly Explorer</h3>
                 <div className="flex items-end justify-center gap-1 mb-4">
-                  <span className="text-6xl font-black text-navy">$27</span>
+                  <span className="text-3xl font-black text-gray-400 line-through mr-2">$27</span>
+                  <span className="text-6xl font-black text-persimmon">$19</span>
                   <span className="text-xl text-navy/60 font-bold mb-2">/month</span>
                 </div>
               </div>
@@ -325,7 +326,7 @@ export default async function SalesPage({
               </ul>
 
               <CheckoutButton
-                priceId="price_1T5VJBC1HhLD0dXEcjcrAEKX"
+                priceId="price_1T6xtSC1HhLD0dXE1w7OCgK2"
                 userEmail={user?.email}
                 className="w-full bg-white text-navy font-black text-xl py-5 rounded-3xl border-4 border-navy hover:bg-sky/20 transition-transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 leading-none"
               >
@@ -338,13 +339,14 @@ export default async function SalesPage({
             {/* Yearly Plan */}
             <div className="bg-cream border-4 border-navy rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_#1C304A] relative hover:-translate-y-2 transition-transform flex flex-col h-full">
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-sunshine text-navy font-bold px-8 py-2 rounded-full border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] whitespace-nowrap">
-                Save $54! Best Value
+                Save $29! Best Value
               </div>
 
               <div className="mb-8 mt-4">
                 <h3 className="text-3xl font-extrabold text-navy mb-2">Yearly Explorer</h3>
                 <div className="flex items-end justify-center gap-1 mb-4">
-                  <span className="text-6xl font-black text-navy">$270</span>
+                  <span className="text-3xl font-black text-gray-400 line-through mr-2">$270</span>
+                  <span className="text-6xl font-black text-persimmon">$199</span>
                   <span className="text-xl text-navy/60 font-bold mb-2">/year</span>
                 </div>
               </div>
@@ -364,7 +366,7 @@ export default async function SalesPage({
               </ul>
 
               <CheckoutButton
-                priceId="price_1T5VOmC1HhLD0dXEWdW2id7G"
+                priceId="price_1T6xwUC1HhLD0dXEgMU4i54M"
                 userEmail={user?.email}
                 className="w-full bg-persimmon text-white font-black text-2xl py-6 rounded-3xl border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[6px_6px_0px_0px_#1C304A] flex flex-col items-center justify-center gap-1 leading-none"
               >
