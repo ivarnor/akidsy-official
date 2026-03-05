@@ -7,10 +7,14 @@ import { createClient } from '@/src/utils/supabase/client';
 import { PlayCircle, Star, Sparkles, Loader2, Compass, BookOpen } from 'lucide-react';
 import { PdfViewerModal } from '@/src/components/PdfViewerModal';
 import { VideoPlayerModal } from '@/src/components/VideoPlayerModal';
+import { WelcomePopup } from '@/src/components/WelcomePopup';
+import { useRouter } from 'next/navigation';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const currentCategory = searchParams.get('cat') || 'Home';
+  const showYearlyWelcome = searchParams.get('welcome') === 'yearly';
   const supabase = createClient();
 
   const [items, setItems] = useState<any[]>([]);
@@ -18,6 +22,18 @@ function DashboardContent() {
   const [selectedPdf, setSelectedPdf] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
   const [selectedVideo, setSelectedVideo] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
   const [fetchingSecureUrl, setFetchingSecureUrl] = useState<string | null>(null); // Track ID of item fetching URL
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
+
+  useEffect(() => {
+    if (showYearlyWelcome) {
+      setIsWelcomeOpen(true);
+      // Clean up the URL so it doesn't pop up again on refresh
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete('welcome');
+      const queryString = newParams.toString();
+      router.replace(queryString ? `?${queryString}` : window.location.pathname);
+    }
+  }, [showYearlyWelcome, searchParams, router]);
 
   useEffect(() => {
     async function fetchContent() {
@@ -239,6 +255,11 @@ function DashboardContent() {
           </div>
         )}
       </div>
+
+      <WelcomePopup
+        show={isWelcomeOpen}
+        onClose={() => setIsWelcomeOpen(false)}
+      />
 
       <PdfViewerModal
         url={selectedPdf.url}

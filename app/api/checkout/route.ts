@@ -30,6 +30,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing priceId, userEmail, or userId' }, { status: 400 });
         }
 
+        const isYearly = priceId === 'yearly' || actualPriceId === PRICE_MAP['yearly'];
+        const nextPath = isYearly ? '/dashboard?welcome=yearly' : '/dashboard';
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             payment_method_collection: 'always',
@@ -44,7 +47,7 @@ export async function POST(req: Request) {
             subscription_data: {
                 trial_period_days: 7
             },
-            success_url: `https://www.akidsy.com/api/auth/callback?next=/dashboard`,
+            success_url: `https://www.akidsy.com/auth/callback?next=${encodeURIComponent(nextPath)}`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: userEmail,
             client_reference_id: userId, // Supabase user linking
@@ -71,6 +74,10 @@ export async function GET(req: Request) {
             return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/login?message=Please log in to checkout`);
         }
 
+        // Note: GET handler currently uses DEFAULT_PRICE_ID (monthly)
+        // If we want to support yearly via GET in the future, we'd need a way to pass the intent.
+        const nextPath = '/dashboard';
+
         const stripeSession = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             payment_method_collection: 'always',
@@ -85,7 +92,7 @@ export async function GET(req: Request) {
             subscription_data: {
                 trial_period_days: 7
             },
-            success_url: `https://www.akidsy.com/api/auth/callback?next=/dashboard`,
+            success_url: `https://www.akidsy.com/auth/callback?next=${encodeURIComponent(nextPath)}`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: user.email,
             client_reference_id: user.email,
