@@ -34,31 +34,59 @@ export async function POST(req: Request) {
     // Handle the event
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
-        const customerEmail = session.customer_details?.email || session.client_reference_id;
+        const customerEmail = session.customer_details?.email;
+        const clientReferenceId = session.client_reference_id;
         const customerId = session.customer as string;
 
-        if (customerEmail) {
-            console.log(`Payment successful for: ${customerEmail}`);
+        console.log(`Processing successful checkout: Customer=${customerId}, Email=${customerEmail}, Ref=${clientReferenceId}`);
 
-            // Update the user profile in Supabase to is_member = true
-            // We look up by email since that's what we matched on the checkout
+        // Define the update payload
+        const updateData = {
+            is_member: true,
+            stripe_customer_id: customerId,
+            subscription_status: 'active'
+        };
+
+        // Try to update by client_reference_id first (assuming it's the Supabase user ID)
+        if (clientReferenceId) {
+            // Check if it's a UUID format
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientReferenceId);
+
+            if (isUuid) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .update(updateData)
+                    .eq('id', clientReferenceId)
+                    .select();
+
+                if (!error && data && data.length > 0) {
+                    console.log('Successfully updated profile by ID:', clientReferenceId);
+                    return NextResponse.json({ received: true });
+                }
+
+                if (error) console.error('Error updating by ID:', error);
+            }
+        }
+
+        // Fallback: Update by email (either from customer_details or client_reference_id if it was an email)
+        const emailToMatch = customerEmail || (clientReferenceId && clientReferenceId.includes('@') ? clientReferenceId : null);
+
+        if (emailToMatch) {
             const { data, error } = await supabase
                 .from('profiles')
-                .update({
-                    is_member: true,
-                    stripe_customer_id: customerId,
-                    subscription_status: 'trialing'
-                })
-                .eq('email', customerEmail)
+                .update(updateData)
+                .eq('email', emailToMatch)
                 .select();
 
             if (error) {
-                console.error('Error updating Supabase profile:', error);
+                console.error('Error updating profile by email:', error);
+            } else if (data && data.length > 0) {
+                console.log('Successfully updated profile by email:', emailToMatch);
             } else {
-                console.log('Successfully updated Supabase profile:', data);
+                console.warn('No profile found to update for email:', emailToMatch);
             }
         } else {
-            console.error('No customer email found in session', session);
+            console.error('No valid ID or email found to identify user', session);
         }
     }
 
