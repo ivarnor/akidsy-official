@@ -7,7 +7,8 @@ import { createClient } from '@/src/utils/supabase/client';
 import { PlayCircle, Star, Sparkles, Loader2, Compass, BookOpen } from 'lucide-react';
 import { PdfViewerModal } from '@/src/components/PdfViewerModal';
 import { VideoPlayerModal } from '@/src/components/VideoPlayerModal';
-import WelcomePopup from '@/src/components/WelcomePopup';
+import DashboardHeader from '@/src/components/DashboardHeader';
+import { WelcomePopup } from '../../src/components/WelcomePopup';
 import { useRouter } from 'next/navigation';
 
 function DashboardContent() {

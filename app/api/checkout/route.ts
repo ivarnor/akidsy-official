@@ -10,8 +10,8 @@ const PRICE_MAP: Record<string, string> = {
     'yearly': 'price_1T6xwUC1HhLD0dXEgMU4i54M'
 };
 
-// Standard site configuration
-const DEFAULT_PRICE_ID = 'price_1T5VJBC1HhLD0dXEcjcrAEKX';
+// Standard site configuration (Always use the newest Monthly ID as default)
+const DEFAULT_PRICE_ID = 'price_1T6xtSC1HhLD0dXE1w7OCgK2';
 
 // The POST handler works well for manual checkout requests passed from client components
 export async function POST(req: Request) {
@@ -63,13 +63,22 @@ export async function GET(req: Request) {
     try {
         const supabase = await createClient();
         const { data: { session: authSession } } = await supabase.auth.getSession();
-        console.log('User Session:', authSession);
-        console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
 
         const user = authSession?.user;
 
         if (!user || !user.email) {
             return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/login?message=Please log in to checkout`);
+        }
+
+        // Check if user is already a member before creating a session
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_member, stripe_customer_id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (profile?.is_member || profile?.stripe_customer_id) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`);
         }
 
         // Note: GET handler currently uses DEFAULT_PRICE_ID (monthly)

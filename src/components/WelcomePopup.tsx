@@ -9,7 +9,7 @@ interface WelcomePopupProps {
     onClose: () => void;
 }
 
-export default function WelcomePopup({ show, onClose }: WelcomePopupProps) {
+export function WelcomePopup({ show, onClose }: WelcomePopupProps) {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {

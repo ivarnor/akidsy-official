@@ -120,13 +120,23 @@ export function LoginContent({ initialIsSignUp = false }: { initialIsSignUp?: bo
                 } else {
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('is_member')
+                        .select('is_member, stripe_customer_id')
                         .eq('id', data.user.id)
-                        .single();
+                        .maybeSingle();
 
-                    if (profile?.is_member) {
+                    // Check if they came here with the intent to buy something
+                    const urlPriceId = searchParams.get('priceId');
+                    const storedPriceId = typeof window !== 'undefined' ? localStorage.getItem('checkoutPriceId') : null;
+                    const hasCheckoutIntent = !!(urlPriceId || storedPriceId);
+
+                    // A user is a "member" if their flag is true OR they have a stripe_customer_id (trialists)
+                    const isSubscribed = profile?.is_member || !!profile?.stripe_customer_id;
+
+                    if (isSubscribed || !hasCheckoutIntent) {
+                        // If they are a member, or just logging in normally without a price intent, go to dashboard
                         router.push('/dashboard');
                     } else {
+                        // Only redirect to checkout if they specifically clicked a "Buy" button previously
                         window.location.href = '/api/checkout';
                     }
                 }
