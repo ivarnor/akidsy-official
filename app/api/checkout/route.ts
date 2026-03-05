@@ -44,7 +44,7 @@ export async function POST(req: Request) {
             subscription_data: {
                 trial_period_days: 7
             },
-            success_url: `https://www.akidsy.com/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `https://www.akidsy.com/api/auth/callback?next=/dashboard`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: userEmail,
             client_reference_id: userId, // Supabase user linking
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
             subscription_data: {
                 trial_period_days: 7
             },
-            success_url: `https://www.akidsy.com/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `https://www.akidsy.com/api/auth/callback?next=/dashboard`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: user.email,
             client_reference_id: user.email,
