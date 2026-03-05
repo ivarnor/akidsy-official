@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         console.log('User Session:', authSession);
         console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
 
-        const { priceId, userEmail } = await req.json();
+        const { priceId, userEmail, userId } = await req.json();
 
         if (!priceId || !userEmail) {
             return NextResponse.json({ error: 'Missing priceId or userEmail' }, { status: 400 });
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
             success_url: `https://www.akidsy.com/dashboard?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: userEmail,
-            client_reference_id: userEmail, // Supabase user email linking
+            client_reference_id: userId || userEmail, // Supabase user linking
         });
 
         return NextResponse.json({ url: session.url });

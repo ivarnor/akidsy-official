@@ -50,11 +50,11 @@ function LoginContent() {
         setIsEmailSent(false);
 
         if (isSignUp) {
-            const { error } = await supabase.auth.signUp({
+            const { data: signUpData, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+                    emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/dashboard`,
                     data: {
                         referrer: typeof document !== 'undefined' ? document.referrer : ''
                     }
@@ -71,20 +71,31 @@ function LoginContent() {
                         const res = await fetch('/api/checkout', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ priceId, userEmail: email })
+                            body: JSON.stringify({ 
+                                priceId, 
+                                userEmail: email,
+                                userId: signUpData?.user?.id || null 
+                            })
                         });
                         const data = await res.json();
                         if (data.url) {
-                            window.location.href = data.url;
+                            window.location.assign(data.url);
+                            return;
+                        } else if (data.error) {
+                            setError(data.error);
+                            setLoading(false);
                             return;
                         }
                     } catch (err) {
                         console.error("Failed to redirect to checkout:", err);
+                        setError("Failed to create checkout session. Please try again.");
+                        setLoading(false);
+                        return;
                     }
+                } else {
+                    setIsEmailSent(true);
+                    setLoading(false);
                 }
-
-                setIsEmailSent(true);
-                setLoading(false);
             }
         } else {
             const { data, error } = await supabase.auth.signInWithPassword({
