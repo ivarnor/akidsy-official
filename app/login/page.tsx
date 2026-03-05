@@ -54,7 +54,7 @@ function LoginContent() {
                 email,
                 password,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
                     data: {
                         referrer: typeof document !== 'undefined' ? document.referrer : ''
                     }
@@ -65,6 +65,24 @@ function LoginContent() {
                 setError(error.message);
                 setLoading(false);
             } else {
+                const priceId = searchParams.get('priceId');
+                if (priceId) {
+                    try {
+                        const res = await fetch('/api/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ priceId, userEmail: email })
+                        });
+                        const data = await res.json();
+                        if (data.url) {
+                            window.location.href = data.url;
+                            return;
+                        }
+                    } catch (err) {
+                        console.error("Failed to redirect to checkout:", err);
+                    }
+                }
+
                 setIsEmailSent(true);
                 setLoading(false);
             }

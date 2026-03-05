@@ -17,7 +17,7 @@ export function CheckoutButton({
         <button
             onClick={async () => {
                 if (!userEmail) {
-                    window.location.href = '/login?message=Please log in to start your trial';
+                    window.location.href = `/login?message=Please log in to start your trial&priceId=${priceId}`;
                     return;
                 }
 
