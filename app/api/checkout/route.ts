@@ -17,8 +17,8 @@ export async function POST(req: Request) {
         // Optional log for debugging
         console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
 
-        if (!priceId || !userEmail) {
-            return NextResponse.json({ error: 'Missing priceId or userEmail' }, { status: 400 });
+        if (!priceId || !userEmail || !userId) {
+            return NextResponse.json({ error: 'Missing priceId, userEmail, or userId' }, { status: 400 });
         }
 
         const session = await stripe.checkout.sessions.create({
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
             success_url: `https://www.akidsy.com/dashboard?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,
             customer_email: userEmail,
-            client_reference_id: userId || userEmail, // Supabase user linking
+            client_reference_id: userId, // Supabase user linking
         });
 
         return NextResponse.json({ url: session.url });
