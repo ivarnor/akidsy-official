@@ -12,12 +12,10 @@ const DEFAULT_PRICE_ID = 'price_1T5VJBC1HhLD0dXEcjcrAEKX';
 // The POST handler works well for manual checkout requests passed from client components
 export async function POST(req: Request) {
     try {
-        const supabase = await createClient();
-        const { data: { session: authSession } } = await supabase.auth.getSession();
-        console.log('User Session:', authSession);
-        console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
-
         const { priceId, userEmail, userId } = await req.json();
+
+        // Optional log for debugging
+        console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
 
         if (!priceId || !userEmail) {
             return NextResponse.json({ error: 'Missing priceId or userEmail' }, { status: 400 });

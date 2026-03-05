@@ -5,12 +5,12 @@ import { createClient } from '@/src/utils/supabase/client';
 import { Sparkles, Loader2, LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-function LoginContent() {
+export function LoginContent({ initialIsSignUp = false }: { initialIsSignUp?: boolean }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSignUp, setIsSignUp] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
     const [isEmailSent, setIsEmailSent] = useState(false);
     const [isForgotPassword, setIsForgotPassword] = useState(false);
     const supabase = createClient();
@@ -22,6 +22,12 @@ function LoginContent() {
         const message = searchParams.get('message');
         if (message && message.includes('trial')) {
             setIsSignUp(true);
+        }
+
+        // Store priceId in localStorage if it exists in the URL
+        const priceId = searchParams.get('priceId');
+        if (priceId) {
+            localStorage.setItem('checkoutPriceId', priceId);
         }
     }, [searchParams]);
 
@@ -65,16 +71,18 @@ function LoginContent() {
                 setError(error.message);
                 setLoading(false);
             } else {
-                const priceId = searchParams.get('priceId');
+                // Retrieve priceId from localStorage instead of just searchParams
+                const urlPriceId = searchParams.get('priceId');
+                const priceId = urlPriceId || localStorage.getItem('checkoutPriceId');
                 if (priceId) {
                     try {
                         const res = await fetch('/api/checkout', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                priceId, 
+                            body: JSON.stringify({
+                                priceId,
                                 userEmail: email,
-                                userId: signUpData?.user?.id || null 
+                                userId: signUpData?.user?.id || null
                             })
                         });
                         const data = await res.json();
