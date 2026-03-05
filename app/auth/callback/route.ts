@@ -32,19 +32,12 @@ export async function GET(request: Request) {
             }
 
             // Already a member? Send them to next/dashboard
-            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-            const isLocalEnv = process.env.NODE_ENV === 'development'
-
-            if (isLocalEnv) {
-                return NextResponse.redirect(`${origin}${next}`)
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
-            } else {
-                return NextResponse.redirect(`${origin}${next}`)
-            }
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+            return NextResponse.redirect(`${siteUrl}${next}`)
         }
     }
 
     // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/login?message=Could not verify your identity`)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+    return NextResponse.redirect(`${siteUrl}/login?message=Could not verify your identity`)
 }

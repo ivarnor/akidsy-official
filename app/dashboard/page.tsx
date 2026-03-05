@@ -1,15 +1,14 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/src/utils/supabase/client';
 import { PlayCircle, Star, Sparkles, Loader2, Compass, BookOpen } from 'lucide-react';
 import { PdfViewerModal } from '@/src/components/PdfViewerModal';
 import { VideoPlayerModal } from '@/src/components/VideoPlayerModal';
 import DashboardHeader from '@/src/components/DashboardHeader';
-import { WelcomePopup } from '../../src/components/WelcomePopup';
-import { useRouter } from 'next/navigation';
+import { WelcomePopup } from '@/src/components/WelcomePopup';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
