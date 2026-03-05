@@ -2,9 +2,7 @@ import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/src/utils/supabase/server'; // Server component to check current logged-in user
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: '2026-02-25.clover',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 // Price MAP for manual ID mapping
 const PRICE_MAP: Record<string, string> = {

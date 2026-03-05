@@ -2,8 +2,12 @@ import { Suspense } from 'react';
 import SubcategoryContent from './SubcategoryContent';
 import { Loader2 } from 'lucide-react';
 
-export default async function SubcategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-    const resolvedParams = await params;
+interface PageProps {
+    params: Promise<{ slug: string }>;
+}
+
+export default async function SubcategoryPage({ params }: PageProps) {
+    const { slug } = await params;
 
     return (
         <Suspense fallback={
@@ -12,7 +16,7 @@ export default async function SubcategoryPage({ params }: { params: Promise<{ sl
                 <p className="font-bold text-navy/60">Finding your coloring pages...</p>
             </div>
         }>
-            <SubcategoryContent slug={resolvedParams.slug} />
+            <SubcategoryContent slug={slug} />
         </Suspense>
     );
 }
