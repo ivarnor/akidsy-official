@@ -16,6 +16,9 @@ export function CheckoutButton({
     return (
         <button
             onClick={async () => {
+                // Instantly save price to localStorage for the signup flow
+                localStorage.setItem('checkoutPriceId', priceId);
+
                 if (!userEmail) {
                     window.location.href = `/signup?message=Please create an account to start your trial&priceId=${priceId}`;
                     return;

@@ -39,7 +39,8 @@ export async function updateSession(request: NextRequest) {
         request.nextUrl.pathname === '/sitemap.xml' ||
         request.nextUrl.pathname === '/robots.txt' ||
         request.nextUrl.pathname.startsWith('/login') ||
-        request.nextUrl.pathname.startsWith('/auth')
+        request.nextUrl.pathname.startsWith('/auth') ||
+        request.nextUrl.pathname.startsWith('/api/checkout')
 
     // Protect all non-public routes
     if (!user && !isPublicRoute) {

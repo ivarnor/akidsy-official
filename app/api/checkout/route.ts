@@ -6,6 +6,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
     apiVersion: '2026-02-25.clover',
 });
 
+// Price MAP for manual ID mapping
+const PRICE_MAP: Record<string, string> = {
+    'monthly': 'price_1T6xtSC1HhLD0dXE1w7OCgK2',
+    'yearly': 'price_1T6xwUC1HhLD0dXEgMU4i54M'
+};
+
 // Standard site configuration
 const DEFAULT_PRICE_ID = 'price_1T5VJBC1HhLD0dXEcjcrAEKX';
 
@@ -14,10 +20,13 @@ export async function POST(req: Request) {
     try {
         const { priceId, userEmail, userId } = await req.json();
 
-        // Optional log for debugging
-        console.log('Target Price:', process.env.NEXT_PUBLIC_STRIPE_PRICE_ID);
+        // Use map to get real priceId if passing "monthly" or "yearly", fallback to passed ID
+        const actualPriceId = PRICE_MAP[priceId] || priceId;
 
-        if (!priceId || !userEmail || !userId) {
+        // Optional log for debugging
+        console.log('Original Price ID Request:', priceId, 'Mapped Price ID:', actualPriceId);
+
+        if (!actualPriceId || !userEmail || !userId) {
             return NextResponse.json({ error: 'Missing priceId, userEmail, or userId' }, { status: 400 });
         }
 
@@ -27,7 +36,7 @@ export async function POST(req: Request) {
             allow_promotion_codes: true,
             line_items: [
                 {
-                    price: priceId,
+                    price: actualPriceId,
                     quantity: 1,
                 },
             ],
