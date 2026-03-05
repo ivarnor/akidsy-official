@@ -25,6 +25,16 @@ function DashboardContent() {
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
 
   useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    if (sessionId) {
+      supabase.auth.refreshSession();
+      // Optional: Clean up session_id from URL
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete('session_id');
+      const queryString = newParams.toString();
+      router.replace(queryString ? `?${queryString}` : window.location.pathname);
+    }
+
     if (showYearlyWelcome) {
       setIsWelcomeOpen(true);
       // Clean up the URL so it doesn't pop up again on refresh
@@ -33,7 +43,7 @@ function DashboardContent() {
       const queryString = newParams.toString();
       router.replace(queryString ? `?${queryString}` : window.location.pathname);
     }
-  }, [showYearlyWelcome, searchParams, router]);
+  }, [showYearlyWelcome, searchParams, router, supabase.auth]);
 
   useEffect(() => {
     async function fetchContent() {

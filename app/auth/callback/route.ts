@@ -28,16 +28,14 @@ export async function GET(request: Request) {
             if (!profile?.is_member) {
                 // Not paid/trialed yet -> force Stripe Checkout
                 // We do a GET redirect so their browser navigates to the checkout creator
-                return NextResponse.redirect(`${origin}/api/checkout`)
+                return NextResponse.redirect(`https://www.akidsy.com/api/checkout`)
             }
 
             // Already a member? Send them to next/dashboard
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
-            return NextResponse.redirect(`${siteUrl}${next}`)
+            return NextResponse.redirect(`https://www.akidsy.com${next}`)
         }
     }
 
     // return the user to an error page with instructions
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
-    return NextResponse.redirect(`${siteUrl}/login?message=Could not verify your identity`)
+    return NextResponse.redirect(`https://www.akidsy.com/login?message=Could not verify your identity`)
 }

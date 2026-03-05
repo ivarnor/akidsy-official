@@ -43,7 +43,12 @@ export async function updateSession(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/api/checkout')
 
     // Protect all non-public routes
-    if (!user && !isPublicRoute) {
+    // Special case: If user is coming from Stripe with a session_id, allow them to reach the dashboard
+    // they will be refreshed on the client side
+    const hasStripeSession = request.nextUrl.searchParams.has('session_id');
+    const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
+
+    if (!user && !isPublicRoute && !(isDashboard && hasStripeSession)) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
