@@ -8,19 +8,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/?message=Please log in to see this content!');
+  let profile = null;
+  if (user) {
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('is_member, subscription_status')
+      .eq('id', user.id)
+      .single();
+    profile = profileData;
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_member, subscription_status')
-    .eq('id', user.id)
-    .single();
+  const isVIP = user?.email === 'ivarnor@gmail.com';
 
-  const isVIP = user.email === 'ivarnor@gmail.com';
-
-  if (!isVIP && !profile?.is_member) {
+  if (user && !isVIP && !profile?.is_member) {
     redirect('/?message=Please join the club to see this content!');
   }
 

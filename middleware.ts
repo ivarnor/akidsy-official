@@ -1,7 +1,12 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/src/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+    // If coming from Stripe, allow them to reach the dashboard or success page so the client-side session can initialize
+    if ((request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/checkout/success')) && request.nextUrl.searchParams.has('session_id')) {
+        return NextResponse.next()
+    }
+
     return await updateSession(request)
 }
 

@@ -19,6 +19,7 @@ function DashboardContent() {
 
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
   const [selectedVideo, setSelectedVideo] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
   const [fetchingSecureUrl, setFetchingSecureUrl] = useState<string | null>(null); // Track ID of item fetching URL
@@ -48,30 +49,44 @@ function DashboardContent() {
   useEffect(() => {
     async function fetchContent() {
       setLoading(true);
+      setAuthLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      let { data: { user } } = await supabase.auth.getUser();
+
+      // Fix: If no user, wait 1.5s and check again (cookie landing grace period)
+      if (!user) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const secondCheck = await supabase.auth.getUser();
+        user = secondCheck.data.user;
+      }
+
+      // If still no user, kick to home
+      if (!user) {
+        router.push('/?message=Please log in to see this content!');
+        return;
+      }
+
+      setAuthLoading(false);
       let excludedCategories: string[] = [];
 
-      if (user) {
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('show_coloring, show_videos, show_puzzles')
-            .eq('id', user.id)
-            .maybeSingle(); // Changed from .single() to .maybeSingle() to gracefully handle 0 rows
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('show_coloring, show_videos, show_puzzles')
+          .eq('id', user.id)
+          .maybeSingle(); // Changed from .single() to .maybeSingle() to gracefully handle 0 rows
 
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching user profile preferences:', profileError);
-          }
-
-          if (profile) {
-            if (profile.show_coloring === false) excludedCategories.push('Coloring books');
-            if (profile.show_videos === false) excludedCategories.push('Videos');
-            if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
-          }
-        } catch (err) {
-          console.error('Unexpected error fetching profile details:', err);
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Error fetching user profile preferences:', profileError);
         }
+
+        if (profile) {
+          if (profile.show_coloring === false) excludedCategories.push('Coloring books');
+          if (profile.show_videos === false) excludedCategories.push('Videos');
+          if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching profile details:', err);
       }
 
       let query = supabase.from('content').select('*').order('created_at', { ascending: false });
@@ -98,7 +113,7 @@ function DashboardContent() {
     }
 
     fetchContent();
-  }, [currentCategory, supabase]);
+  }, [currentCategory, supabase, router]);
 
   const getCategoryDetails = (cat: string) => {
     switch (cat) {
@@ -112,6 +127,18 @@ function DashboardContent() {
   };
 
   const catDetails = getCategoryDetails(currentCategory);
+
+  if (authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="w-12 h-12 text-sky animate-spin" />
+        <p className="font-bold text-navy/60 text-center">
+          Verifying your explorer status...<br />
+          <span className="text-sm opacity-50 font-medium">Just a second!</span>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12 pb-20">

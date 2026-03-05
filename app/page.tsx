@@ -89,18 +89,34 @@ export default async function SalesPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {/* Banner Message (Always visible but changes text based on param) */}
-      <div className="bg-persimmon text-white text-center p-4 font-bold border-b-4 border-navy flex justify-center items-center gap-2">
-        <AlertCircle className="w-6 h-6" />
-        {message ? decodeURIComponent(message) : "⚠️ Please join the club to see this content!"}
-      </div>
+      {/* Banner Message (Only visible if there is a specific message) */}
+      {message && (
+        <div className="bg-persimmon text-white text-center p-4 font-bold border-b-4 border-navy flex justify-center items-center gap-2">
+          <AlertCircle className="w-6 h-6" />
+          {decodeURIComponent(message)}
+        </div>
+      )}
 
-      {/* Navigation */}
       <nav className="p-6 flex justify-between items-center max-w-7xl w-full mx-auto">
         <div className="text-3xl font-bold text-navy flex items-center gap-2">
           <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
           Akidsy
         </div>
+        {user ? (
+          <Link
+            href="/dashboard"
+            className="bg-navy text-white px-6 py-2 rounded-full font-bold hover:bg-sky transition-colors shadow-[4px_4px_0px_0px_#57CC99]"
+          >
+            Back to Dashboard
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="text-navy font-bold hover:text-sky transition-colors"
+          >
+            Member Login
+          </Link>
+        )}
       </nav>
 
       {/* Hero Section */}
