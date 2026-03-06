@@ -35,8 +35,14 @@ export function AppSidebar() {
 
     const [isColoringOpen, setIsColoringOpen] = useState(false);
 
-    // Close sidebar on route change on mobile
+    // Close sidebar on route change on mobile and halt any videos locally
     useEffect(() => {
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+            video.pause();
+            video.src = '';
+            video.load();
+        });
         setOpenMobile(false);
     }, [pathname, searchParams, setOpenMobile]);
 

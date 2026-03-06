@@ -191,6 +191,7 @@ const Sidebar = React.forwardRef<
                             openMobile ? "translate-x-0" : "-translate-x-full",
                             className
                         )}
+                        style={{ WebkitBackdropFilter: 'blur(10px)', transform: 'translate3d(0, 0, 0)' }}
                         ref={ref}
                         {...props}
                     >

@@ -81,6 +81,8 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
         return () => {
             if (playerRef.current) {
+                playerRef.current.pause();
+                playerRef.current.src('');
                 playerRef.current.dispose();
                 playerRef.current = null;
             }
