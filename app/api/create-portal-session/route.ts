@@ -26,7 +26,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No active subscription or customer ID found.' }, { status: 404 });
         }
 
-        const returnUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/account`;
+        const returnUrl = `https://www.akidsy.com/dashboard`;
 
         // Create the Stripe Billing Portal session
         const portalSession = await stripe.billingPortal.sessions.create({

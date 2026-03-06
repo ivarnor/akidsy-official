@@ -88,6 +88,28 @@ export async function POST(req: Request) {
         } else {
             console.error('No valid ID or email found to identify user', session);
         }
+    } else if (event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+
+        console.log(`Processing subscription cancellation: Customer=${customerId}`);
+
+        if (customerId) {
+            const { data, error } = await supabase
+                .from('profiles')
+                .update({
+                    is_member: false,
+                    subscription_status: 'canceled'
+                })
+                .eq('stripe_customer_id', customerId)
+                .select();
+
+            if (!error && data && data.length > 0) {
+                console.log('Successfully updated profile to reflect cancellation:', customerId);
+            } else {
+                console.error('Error updating profile for cancellation or customer not found:', error || 'No matching customer ID');
+            }
+        }
     }
 
     return NextResponse.json({ received: true });

@@ -97,7 +97,11 @@ export default async function AccountPage() {
                                     <p className="text-xl font-bold text-navy">{planName}</p>
                                 </div>
                                 <div className="text-right">
-                                    <AccountManagementClient userEmail={user.email || ''} isVIP={isVIP} />
+                                    <AccountManagementClient
+                                        userEmail={user.email || ''}
+                                        isVIP={isVIP}
+                                        stripeCustomerId={profile?.stripe_customer_id || null}
+                                    />
                                 </div>
                             </div>
                         </div>
