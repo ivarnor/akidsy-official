@@ -388,7 +388,7 @@ export default function AdminPage() {
                         <button
                             onClick={async () => {
                                 await supabase.auth.signOut();
-                                router.push('/login');
+                                router.push('/login?message=You have been successfully logged out.');
                             }}
                             className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2.5 rounded-xl hover:bg-red-500/20 transition-all font-semibold text-sm"
                         >

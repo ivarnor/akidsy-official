@@ -25,7 +25,7 @@ export default function DashboardHeader() {
         await supabase.auth.signOut();
 
         // Redirect safely
-        window.location.href = '/';
+        window.location.href = '/login?message=You have been successfully logged out.';
     };
 
     return (
