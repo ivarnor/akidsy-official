@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import { X, PlayCircle, Loader2 } from 'lucide-react';
+import { useSidebar } from '@/src/components/ui/sidebar';
 
 interface VideoPlayerModalProps {
     url: string | null;
@@ -18,6 +19,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
     const playerRef = useRef<any>(null);
     const [isEnded, setIsEnded] = useState(false);
     const [loading, setLoading] = useState(true);
+    const { state, isMobile } = useSidebar();
 
     useEffect(() => {
         if (!url || !videoNodeRef.current) return;
@@ -80,10 +82,25 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
         };
     }, [url]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
+
     if (!url) return null;
 
+    const sidebarPadding = isMobile ? 0 : state === 'expanded' ? '16rem' : '4.5rem';
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity">
+        <div
+            className="fixed inset-0 z-10 flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity"
+            style={{ paddingLeft: sidebarPadding }}
+        >
             <div className="w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-300">
 
                 {/* Header Navbar */}
