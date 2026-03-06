@@ -181,17 +181,17 @@ const Sidebar = React.forwardRef<
                     {/* Mobile Drawer Overlay */}
                     {openMobile && (
                         <div
-                            className="fixed inset-0 z-[100] bg-navy/50 backdrop-blur-sm md:hidden transition-opacity"
+                            className="fixed inset-0 z-[9998] bg-navy/50 md:hidden transition-opacity"
                             onClick={() => setOpenMobile(false)}
                         />
                     )}
                     <div
                         className={cn(
-                            "fixed inset-y-0 left-0 z-[101] w-[--sidebar-width-mobile] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden",
+                            "fixed inset-y-0 left-0 z-[9999] w-[--sidebar-width-mobile] shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden",
                             openMobile ? "translate-x-0" : "-translate-x-full",
                             className
                         )}
-                        style={{ WebkitBackdropFilter: 'blur(10px)', transform: 'translate3d(0, 0, 0)' }}
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.98)', transform: 'translate3d(0, 0, 0)' }}
                         ref={ref}
                         {...props}
                     >

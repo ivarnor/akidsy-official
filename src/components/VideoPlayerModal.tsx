@@ -83,6 +83,16 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
             if (playerRef.current) {
                 playerRef.current.pause();
                 playerRef.current.src('');
+
+                // Hard-kill the video source from the DOM to force Safari to unload from memory
+                if (videoNodeRef.current) {
+                    const videoTag = videoNodeRef.current.querySelector('video');
+                    if (videoTag) {
+                        videoTag.removeAttribute('src');
+                        videoTag.load();
+                    }
+                }
+
                 playerRef.current.dispose();
                 playerRef.current = null;
             }
@@ -105,7 +115,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
     return (
         <div
-            className="fixed inset-0 z-40 flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group"
+            className="fixed inset-0 z-[1] flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group"
             style={{ paddingLeft: sidebarPadding }}
         >
             <div className="w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-300">
