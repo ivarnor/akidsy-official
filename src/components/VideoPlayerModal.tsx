@@ -19,6 +19,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
     const playerRef = useRef<any>(null);
     const [isEnded, setIsEnded] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isPlaying, setIsPlaying] = useState(false);
     const { state, isMobile } = useSidebar();
 
     useEffect(() => {
@@ -70,7 +71,11 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
         player.on('ended', () => {
             setIsEnded(true);
+            setIsPlaying(false);
         });
+
+        player.on('play', () => setIsPlaying(true));
+        player.on('pause', () => setIsPlaying(false));
 
         player.src({ src: url, type: 'video/mp4' });
 
@@ -98,20 +103,22 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
     return (
         <div
-            className="fixed inset-0 z-10 flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity"
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group"
             style={{ paddingLeft: sidebarPadding }}
         >
             <div className="w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-300">
 
                 {/* Header Navbar */}
-                <div className="absolute top-0 left-0 right-0 z-50 p-4 md:p-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
+                <div
+                    className={`absolute top-0 left-0 right-0 z-50 p-4 md:p-6 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}
+                >
                     <h2 className="text-xl md:text-3xl font-black text-white drop-shadow-md truncate pr-4">
                         {title || "Watching Video"}
                     </h2>
 
                     <button
                         onClick={onClose}
-                        className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all hover:scale-110 active:scale-95"
+                        className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all hover:scale-110 active:scale-95 pointer-events-auto"
                         aria-label="Close Player"
                     >
                         <X className="w-8 h-8" />
