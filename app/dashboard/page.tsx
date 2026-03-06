@@ -304,11 +304,13 @@ function DashboardContent() {
         onClose={() => setSelectedPdf({ url: null, title: '' })}
       />
 
-      <VideoPlayerModal
-        url={selectedVideo.url}
-        title={selectedVideo.title}
-        onClose={() => setSelectedVideo({ url: null, title: '' })}
-      />
+      {selectedVideo.url && (
+        <VideoPlayerModal
+          url={selectedVideo.url}
+          title={selectedVideo.title}
+          onClose={() => setSelectedVideo({ url: null, title: '' })}
+        />
+      )}
     </div>
   );
 }

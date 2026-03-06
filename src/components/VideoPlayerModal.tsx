@@ -88,8 +88,11 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                 if (videoNodeRef.current) {
                     const videoTag = videoNodeRef.current.querySelector('video');
                     if (videoTag) {
+                        videoTag.pause();
                         videoTag.removeAttribute('src');
+                        videoTag.src = '';
                         videoTag.load();
+                        videoTag.remove();
                     }
                 }
 
@@ -115,7 +118,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
     return (
         <div
-            className="fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group"
+            className={`fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group ${url ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
             <div
                 className="w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-300"

@@ -82,7 +82,7 @@ export function AppSidebar() {
             : `${subNavItemClasses} text-navy/80 border-transparent hover:bg-slate-100 hover:text-navy hover:border-slate-200`;
 
     return (
-        <Sidebar variant="sidebar" collapsible="icon" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A] z-[100]">
+        <Sidebar variant="sidebar" collapsible="icon" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A] !z-[9999]">
             <SidebarHeader className="h-16 px-4 flex flex-row items-center justify-between shrink-0 border-b-2 border-slate-100 bg-white overflow-hidden">
                 <div className="flex items-center gap-2 overflow-hidden">
                     <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2 shrink-0" onClick={() => setOpenMobile(false)}>
