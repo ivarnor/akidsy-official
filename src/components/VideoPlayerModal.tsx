@@ -115,10 +115,12 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
     return (
         <div
-            className="fixed inset-0 z-[1] flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group"
-            style={{ paddingLeft: sidebarPadding }}
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity group"
         >
-            <div className="w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-300">
+            <div
+                className="w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] flex flex-col relative animate-in fade-in zoom-in-95 duration-300"
+                style={{ marginLeft: sidebarPadding }}
+            >
 
                 {/* Header Navbar */}
                 <div
@@ -138,7 +140,10 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                 </div>
 
                 {/* Video Container */}
-                <div className="flex-1 w-full max-w-full bg-black relative flex items-center justify-center overflow-hidden rounded-none md:rounded-[2rem] shadow-2xl mt-16 md:mt-0" onContextMenu={(e) => e.preventDefault()}>
+                <div
+                    className={`flex-1 w-full max-w-full bg-black relative flex items-center justify-center overflow-hidden rounded-none md:rounded-[2rem] shadow-2xl mt-16 md:mt-0 ${!isPlaying && !loading ? 'pointer-events-none' : ''}`}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
 
                     {loading && (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
@@ -151,7 +156,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
                     {/* Next Video Overlay */}
                     {isEnded && hasNext && onNext && (
-                        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-300">
+                        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-300 pointer-events-auto">
                             <h3 className="text-3xl md:text-5xl font-black text-white mb-8 text-center px-4 leading-tight">
                                 Great job watching! ✨<br /> Ready for the next adventure?
                             </h3>
@@ -175,7 +180,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                     )}
                     {/* End State if no next video */}
                     {isEnded && !hasNext && (
-                        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-300">
+                        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-300 pointer-events-auto">
                             <h3 className="text-3xl md:text-5xl font-black text-white mb-8 text-center px-4 leading-tight">
                                 You finished it! 🌟
                             </h3>
