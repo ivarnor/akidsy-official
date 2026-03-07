@@ -96,6 +96,15 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                     }
                 }
 
+                // Nuclear Safari-specific cleanup directly targeting document 
+                const docVideo = document.querySelector('video');
+                if (docVideo) { 
+                    docVideo.pause(); 
+                    docVideo.src = ""; 
+                    docVideo.load(); 
+                    docVideo.remove(); 
+                }
+
                 playerRef.current.dispose();
                 playerRef.current = null;
             }
@@ -135,7 +144,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
                     <button
                         onClick={onClose}
-                        className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all hover:scale-110 active:scale-95 pointer-events-auto"
+                        className="fixed top-[20px] right-[20px] z-[99999] bg-black/60 hover:bg-black/80 border-2 border-white/20 text-white p-3 rounded-full backdrop-blur-md transition-all hover:scale-110 active:scale-95 pointer-events-auto flex items-center justify-center shadow-xl"
                         aria-label="Close Player"
                     >
                         <X className="w-8 h-8" />

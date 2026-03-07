@@ -35,18 +35,26 @@ export function AppSidebar() {
 
     const [isColoringOpen, setIsColoringOpen] = useState(false);
 
+    const killVideo = () => {
+        const docVideo = document.querySelector('video');
+        if (docVideo) {
+            docVideo.pause();
+            docVideo.src = "";
+            docVideo.load();
+            docVideo.remove();
+        }
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+            video.pause();
+            video.src = '';
+            video.load();
+            video.remove();
+        });
+    };
+
     // Close sidebar on route change on mobile and halt any videos locally
     useEffect(() => {
-        const stopAllVideos = () => {
-            const videos = document.querySelectorAll('video');
-            videos.forEach(video => {
-                video.pause();
-                video.src = '';
-                video.load();
-                video.remove();
-            });
-        };
-        stopAllVideos();
+        killVideo();
         setOpenMobile(false);
     }, [pathname, searchParams, setOpenMobile]);
 
@@ -85,7 +93,7 @@ export function AppSidebar() {
         <Sidebar variant="sidebar" collapsible="icon" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A] !z-[9999]">
             <SidebarHeader className="h-16 px-4 flex flex-row items-center justify-between shrink-0 border-b-2 border-slate-100 bg-white overflow-hidden">
                 <div className="flex items-center gap-2 overflow-hidden">
-                    <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2 shrink-0" onClick={() => setOpenMobile(false)}>
+                    <Link href="/dashboard" className="text-2xl font-bold text-navy flex items-center gap-2 shrink-0" onClick={() => { killVideo(); setOpenMobile(false); }}>
                         <Sparkles className="w-8 h-8 text-sunshine fill-sunshine" />
                         <span className={isCollapsed ? "hidden" : ""}>Akidsy</span>
                     </Link>
@@ -97,6 +105,7 @@ export function AppSidebar() {
                     href="/dashboard"
                     className={getLinkClasses(isActive('/dashboard'))}
                     title="Home"
+                    onClick={killVideo}
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Home className="w-6 h-6 shrink-0" />
@@ -107,7 +116,7 @@ export function AppSidebar() {
                 {/* Coloring Books (Collapsible) */}
                 <div className="space-y-1">
                     <button
-                        onClick={() => state !== "collapsed" ? setIsColoringOpen(!isColoringOpen) : toggleSidebar()}
+                        onClick={() => { killVideo(); state !== "collapsed" ? setIsColoringOpen(!isColoringOpen) : toggleSidebar(); }}
                         className={`${getLinkClasses(categoryParams === 'Coloring' || pathname.includes('/dashboard/coloring'))} ${isCollapsed ? "mb-0" : ""} mb-2`}
                         title="Coloring Books"
                     >
@@ -122,18 +131,21 @@ export function AppSidebar() {
                         <Link
                             href="/dashboard/coloring/animals"
                             className={getSubLinkClasses(pathname === '/dashboard/coloring/animals')}
+                            onClick={killVideo}
                         >
                             <span className="text-xl leading-none">🦁</span> Animals
                         </Link>
                         <Link
                             href="/dashboard/coloring/space"
                             className={getSubLinkClasses(pathname === '/dashboard/coloring/space')}
+                            onClick={killVideo}
                         >
                             <span className="text-xl leading-none">🚀</span> Space
                         </Link>
                         <Link
                             href="/dashboard/coloring/vehicles"
                             className={getSubLinkClasses(pathname === '/dashboard/coloring/vehicles')}
+                            onClick={killVideo}
                         >
                             <span className="text-xl leading-none">🚗</span> Vehicles
                         </Link>
@@ -144,6 +156,7 @@ export function AppSidebar() {
                     href="/dashboard?cat=Videos"
                     className={getLinkClasses(isActive('/dashboard', 'Videos'))}
                     title="Videos"
+                    onClick={killVideo}
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Tv className="w-6 h-6 shrink-0" />
@@ -155,6 +168,7 @@ export function AppSidebar() {
                     href="/dashboard?cat=Puzzles"
                     className={getLinkClasses(isActive('/dashboard', 'Puzzles'))}
                     title="Puzzles"
+                    onClick={killVideo}
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <Puzzle className="w-6 h-6 shrink-0" />
@@ -166,6 +180,7 @@ export function AppSidebar() {
                     href="/dashboard?cat=Ebooks"
                     className={getLinkClasses(isActive('/dashboard', 'Ebooks'))}
                     title="Ebooks"
+                    onClick={killVideo}
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <BookOpen className="w-6 h-6 shrink-0" />
@@ -177,6 +192,7 @@ export function AppSidebar() {
                     href="/dashboard?cat=Education"
                     className={getLinkClasses(isActive('/dashboard', 'Education'))}
                     title="Education"
+                    onClick={killVideo}
                 >
                     <div className="flex items-center gap-3 shrink-0">
                         <GraduationCap className="w-6 h-6 shrink-0" />
@@ -189,6 +205,7 @@ export function AppSidebar() {
                         href="/dashboard/support"
                         className={getLinkClasses(isActive('/dashboard/support'))}
                         title="Support"
+                        onClick={killVideo}
                     >
                         <div className="flex items-center gap-3 shrink-0">
                             <LifeBuoy className="w-6 h-6 shrink-0" />
@@ -203,6 +220,7 @@ export function AppSidebar() {
                     href="/dashboard/parent"
                     className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl font-bold transition-all border-2 border-navy/10 text-navy hover:bg-slate-100 hover:border-navy/30 ${pathname.startsWith('/dashboard/parent') ? 'bg-slate-100 border-navy/30 shadow-inner' : ''}`}
                     title="Parent Zone"
+                    onClick={killVideo}
                 >
                     <Lock className="w-6 h-6 shrink-0 text-navy/70" />
                     <span className={isCollapsed ? "hidden" : ""}>Parent Zone</span>
