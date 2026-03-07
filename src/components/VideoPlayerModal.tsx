@@ -42,21 +42,26 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
             try {
                 // Not a full URL, it must be a storage path.
-                const { getSignedUrl } = await import('@/src/utils/supabase/storage-actions');
+                const { createClient } = await import('@/src/utils/supabase/client');
+                const supabase = createClient();
 
                 // Generate Signed URL
-                const { url: signedUrl, error } = await getSignedUrl('videos', url!);
+                const { data, error } = await supabase.storage.from('videos').createSignedUrl(url!, 3600);
 
-                if (error || !signedUrl) {
-                    throw new Error(error || 'Could not load video. Please try again later.');
+                if (error || !data?.signedUrl) {
+                    console.error('Supabase signed URL error:', error);
+                    throw new Error('Error: Could not find the video file in storage.');
                 }
 
+                console.log('Generated Signed URL:', data.signedUrl);
+
                 if (isMounted) {
-                    setVideoSrc(signedUrl);
+                    setVideoSrc(data.signedUrl);
                 }
             } catch (err: any) {
                 if (isMounted) {
-                    setErrorMsg(err.message || 'Error pulling the document.');
+                    // Ensure the requested exact error message is shown
+                    setErrorMsg(err.message || 'Error: Could not find the video file in storage.');
                     setLoading(false);
                 }
             }
