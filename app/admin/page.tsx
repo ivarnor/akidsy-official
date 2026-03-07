@@ -653,8 +653,8 @@ export default function AdminPage() {
                                     </div>
                                     <input
                                         required
-                                        type="url"
-                                        placeholder="Or paste direct URL..."
+                                        type="text"
+                                        placeholder="Or paste direct URL or file path..."
                                         className="w-full p-3 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-mono"
                                         value={formData.url}
                                         onChange={(e) => setFormData({ ...formData, url: e.target.value })}
@@ -693,8 +693,8 @@ export default function AdminPage() {
                                         )}
                                     </div>
                                     <input
-                                        type="url"
-                                        placeholder="Or paste direct image URL..."
+                                        type="text"
+                                        placeholder="Or paste direct image URL or file path..."
                                         className="w-full p-3 rounded-lg border border-slate-700 bg-slate-900 text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs font-mono"
                                         value={formData.thumbnail_url}
                                         onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
