@@ -46,7 +46,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                 const supabase = createClient();
 
                 // Generate Signed URL
-                const { data, error } = await supabase.storage.from('videos').createSignedUrl(url!, 3600);
+                const { data, error } = await supabase.storage.from('content').createSignedUrl(url!, 3600);
 
                 if (error || !data?.signedUrl) {
                     console.error('Supabase signed URL error:', error);
@@ -231,7 +231,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                         </div>
                     )}
 
-                    <div data-vjs-player className={`w-full h-full relative ${errorMsg ? 'hidden' : ''}`} ref={videoNodeRef}>
+                    <div data-vjs-player className={`w-full h-full relative ${(!videoSrc || errorMsg) ? 'hidden' : ''}`} ref={videoNodeRef}>
                     </div>
 
                     {/* Next Video Overlay */}
