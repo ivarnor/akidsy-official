@@ -43,33 +43,16 @@ export function PdfViewerModal({
                         path = pathParts.slice(1).join('/');
                     }
 
-                    const { createClient } = await import('@/src/utils/supabase/client');
-                    const supabase = createClient();
-
-                    // Check membership
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) throw new Error('Not authenticated');
-
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('is_member')
-                        .eq('id', user.id)
-                        .single();
-
-                    if (!profile?.is_member) {
-                        throw new Error('Access Denied. Please check your subscription status.');
-                    }
-
+                    const { getSignedUrl } = await import('@/src/utils/supabase/storage-actions');
+                    
                     // Generate Signed URL
-                    const { data, error } = await supabase.storage
-                        .from(bucket)
-                        .createSignedUrl(path, 3600);
+                    const { url: signedUrl, error } = await getSignedUrl(bucket, path, 60);
 
-                    if (error || !data) {
-                        throw new Error('Could not load PDF securely. Please try again later.');
+                    if (error || !signedUrl) {
+                        throw new Error(error || 'Could not load PDF securely. Please try again later.');
                     }
 
-                    fetchUrl = data.signedUrl;
+                    fetchUrl = signedUrl;
                 }
 
                 // Fetch the PDF as a blob to create a secure local object URL

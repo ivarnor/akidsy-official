@@ -42,34 +42,17 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
 
             try {
                 // Not a full URL, it must be a storage path.
-                const { createClient } = await import('@/src/utils/supabase/client');
-                const supabase = createClient();
-
-                // Check membership
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error('Not authenticated');
-
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('is_member')
-                    .eq('id', user.id)
-                    .single();
-
-                if (!profile?.is_member) {
-                    throw new Error('Access Denied. Please check your subscription status.');
-                }
+                const { getSignedUrl } = await import('@/src/utils/supabase/storage-actions');
 
                 // Generate Signed URL
-                const { data, error } = await supabase.storage
-                    .from('videos')
-                    .createSignedUrl(url!, 3600);
+                const { url: signedUrl, error } = await getSignedUrl('videos', url!);
 
-                if (error || !data) {
-                    throw new Error('Could not load video. Please try again later.');
+                if (error || !signedUrl) {
+                    throw new Error(error || 'Could not load video. Please try again later.');
                 }
 
                 if (isMounted) {
-                    setVideoSrc(data.signedUrl);
+                    setVideoSrc(signedUrl);
                 }
             } catch (err: any) {
                 if (isMounted) {
