@@ -20,10 +20,74 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
     const [isEnded, setIsEnded] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [videoSrc, setVideoSrc] = useState<string | null>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const { state, isMobile } = useSidebar();
 
     useEffect(() => {
-        if (!url || !videoNodeRef.current) return;
+        if (!url) return;
+
+        let isMounted = true;
+        setLoading(true);
+        setErrorMsg(null);
+
+        async function fetchSecureUrl() {
+            if (url?.startsWith('http')) {
+                // If it's already a full HTTP URL, just use it directly
+                if (isMounted) {
+                    setVideoSrc(url);
+                }
+                return;
+            }
+
+            try {
+                // Not a full URL, it must be a storage path.
+                const { createClient } = await import('@/src/utils/supabase/client');
+                const supabase = createClient();
+
+                // Check membership
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Not authenticated');
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('is_member')
+                    .eq('id', user.id)
+                    .single();
+
+                if (!profile?.is_member) {
+                    throw new Error('Access Denied. Please check your subscription status.');
+                }
+
+                // Generate Signed URL
+                const { data, error } = await supabase.storage
+                    .from('videos')
+                    .createSignedUrl(url!, 3600);
+
+                if (error || !data) {
+                    throw new Error('Could not load video. Please try again later.');
+                }
+
+                if (isMounted) {
+                    setVideoSrc(data.signedUrl);
+                }
+            } catch (err: any) {
+                if (isMounted) {
+                    setErrorMsg(err.message || 'Error pulling the document.');
+                    setLoading(false);
+                }
+            }
+        }
+
+        fetchSecureUrl();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [url]);
+
+    useEffect(() => {
+        if (!videoSrc || !videoNodeRef.current) return;
 
         setIsEnded(false);
         setLoading(true);
@@ -77,7 +141,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
         player.on('play', () => setIsPlaying(true));
         player.on('pause', () => setIsPlaying(false));
 
-        player.src({ src: url, type: 'video/mp4' });
+        player.src({ src: videoSrc, type: 'video/mp4' });
 
         return () => {
             if (playerRef.current) {
@@ -109,7 +173,7 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                 playerRef.current = null;
             }
         };
-    }, [url]);
+    }, [videoSrc]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -163,7 +227,23 @@ export function VideoPlayerModal({ url, title, onClose, onNext, hasNext }: Video
                         </div>
                     )}
 
-                    <div data-vjs-player className="w-full h-full relative" ref={videoNodeRef}>
+                    {errorMsg && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black p-6 text-center">
+                            <div className="bg-red-900/50 p-4 rounded-full border-4 border-red-500 mb-4 flex items-center justify-center">
+                                <X className="w-12 h-12 text-red-500" />
+                            </div>
+                            <h3 className="text-2xl md:text-3xl font-black text-white mb-2">Oops! Something went wrong.</h3>
+                            <p className="text-white/70 font-semibold mb-6 max-w-md">{errorMsg}</p>
+                            <button
+                                onClick={onClose}
+                                className="bg-white/10 text-white font-bold px-8 py-3 rounded-xl border-2 border-white/20 hover:bg-white/20 transition-all"
+                            >
+                                Go Back
+                            </button>
+                        </div>
+                    )}
+
+                    <div data-vjs-player className={`w-full h-full relative ${errorMsg ? 'hidden' : ''}`} ref={videoNodeRef}>
                     </div>
 
                     {/* Next Video Overlay */}

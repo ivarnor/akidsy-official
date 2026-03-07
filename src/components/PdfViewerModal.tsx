@@ -29,9 +29,52 @@ export function PdfViewerModal({
 
         async function fetchPdf() {
             try {
+                let fetchUrl = url as string;
+
+                // Determine if we need to sign the URL (either it's a public Supabase URL or a raw path)
+                if (fetchUrl.includes('/storage/v1/object/public/') || !fetchUrl.startsWith('http')) {
+                    let bucket = 'content-assets';
+                    let path = fetchUrl;
+
+                    if (fetchUrl.includes('/storage/v1/object/public/')) {
+                        const urlObj = new URL(fetchUrl);
+                        const pathParts = urlObj.pathname.split('/storage/v1/object/public/')[1].split('/');
+                        bucket = pathParts[0];
+                        path = pathParts.slice(1).join('/');
+                    }
+
+                    const { createClient } = await import('@/src/utils/supabase/client');
+                    const supabase = createClient();
+
+                    // Check membership
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) throw new Error('Not authenticated');
+
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_member')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (!profile?.is_member) {
+                        throw new Error('Access Denied. Please check your subscription status.');
+                    }
+
+                    // Generate Signed URL
+                    const { data, error } = await supabase.storage
+                        .from(bucket)
+                        .createSignedUrl(path, 3600);
+
+                    if (error || !data) {
+                        throw new Error('Could not load PDF securely. Please try again later.');
+                    }
+
+                    fetchUrl = data.signedUrl;
+                }
+
                 // Fetch the PDF as a blob to create a secure local object URL
                 // This hides the true Supabase URL from the DOM and prevents CORS issues when printing
-                const response = await fetch(url as string);
+                const response = await fetch(fetchUrl);
                 if (!response.ok) throw new Error('Failed to load PDF securely.');
 
                 const blob = await response.blob();
