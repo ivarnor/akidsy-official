@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/src/utils/supabase/client';
-import { Download, Loader2, Sparkles } from 'lucide-react';
+import { Download, Eye, Loader2, Sparkles } from 'lucide-react';
+import { getSignedUrl } from '@/src/utils/supabase/storage-actions';
 
 export function PrintableCard({ 
     item, 
@@ -19,7 +20,7 @@ export function PrintableCard({
     const supabase = createClient();
     const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
     const [imageError, setImageError] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
+    const [actionLoading, setActionLoading] = useState<'view' | 'download' | null>(null);
 
     // 1. Construct the Public URL using the base path + filename
     const hasThumb = item.thumbnail_url && item.thumbnail_url.trim() !== '';
@@ -30,49 +31,51 @@ export function PrintableCard({
     // 4. Add console.log for debugging
     console.log('Image Source:', thumbnailUrl);
 
-    const handleDownload = async (e: React.MouseEvent) => {
+    const handleAction = async (e: React.MouseEvent, mode: 'view' | 'download') => {
         e.preventDefault();
         e.stopPropagation();
 
-        // 4. Debugging Log
+        if (actionLoading) return;
+
+        console.log("Action Mode:", mode);
         console.log("User Subscription Status:", subscriptionType);
         console.log("Is Member:", isMember, "Is VIP:", isVIP);
 
-        // 1. Expanded Access Control (isVIP corresponds to ivarnor@gmail.com bypass)
         if (!isMember && !isVIP) {
             alert('Access Denied. You need an active subscription to access this content.');
             return;
         }
 
-        setIsDownloading(true);
+        setActionLoading(mode);
 
         try {
-            // 3. Fix 'Access Denied' on Download trigger
-            const { data, error } = await supabase.storage
-                .from('content')
-                .createSignedUrl(item.url, 60, {
-                    download: true,
-                });
+            // Use server action for consistent logic and bypass
+            const signedUrl = await getSignedUrl('content', item.url, 60);
 
-            if (error || !data?.signedUrl) {
-                console.error('Error creating signed URL:', error);
-                alert('Access Denied or File Not Found. Could not generate download link.');
+            if (!signedUrl) {
+                console.error('Error creating signed URL');
+                alert('Access Denied or File Not Found. Could not generate secure link.');
                 return;
             }
 
-            // Trigger download natively
-            const link = document.createElement('a');
-            link.href = data.signedUrl;
-            const fileName = item.url.split('/').pop() || `${item.title}.pdf`;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            if (mode === 'download') {
+                // Trigger download natively
+                const link = document.createElement('a');
+                link.href = signedUrl;
+                const fileName = item.url.split('/').pop() || `${item.title}.pdf`;
+                link.setAttribute('download', fileName);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            } else {
+                // View action
+                window.open(signedUrl, '_blank');
+            }
         } catch (err) {
-            console.error('Error during download process:', err);
+            console.error('Error during action process:', err);
             alert('An unexpected error occurred.');
         } finally {
-            setIsDownloading(false);
+            setActionLoading(null);
         }
     };
 
@@ -107,27 +110,42 @@ export function PrintableCard({
                     </span>
                 </div>
 
-                <div className={`absolute inset-0 bg-navy/40 backdrop-blur-[2px] transition-opacity duration-300 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100`}>
-                    <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
-                        <Download className="w-10 h-10 text-sky" />
-                    </div>
+                <div className={`absolute inset-0 bg-navy/60 backdrop-blur-[2px] transition-opacity duration-300 z-10 flex flex-col items-center justify-center gap-4 opacity-0 group-hover:opacity-100`}>
+                    <button 
+                        onClick={(e) => handleAction(e, 'view')}
+                        disabled={!!actionLoading}
+                        className="w-40 bg-white text-navy font-bold py-3 rounded-full border-4 border-navy hover:bg-sky hover:text-white transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#1C304A] disabled:opacity-50"
+                    >
+                        {actionLoading === 'view' ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <Eye className="w-5 h-5" />
+                        )}
+                        View PDF
+                    </button>
+                    <button 
+                        onClick={(e) => handleAction(e, 'download')}
+                        disabled={!!actionLoading}
+                        className="w-40 bg-sky text-white font-bold py-3 rounded-full border-4 border-navy hover:bg-persimmon transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#1C304A] disabled:opacity-50"
+                    >
+                        {actionLoading === 'download' ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <Download className="w-5 h-5" />
+                        )}
+                        Download
+                    </button>
                 </div>
-
-                <button 
-                    onClick={handleDownload}
-                    disabled={isDownloading}
-                    className="absolute inset-0 z-30 w-full h-full cursor-pointer opacity-0"
-                    aria-label={`Download ${item.title}`}
-                />
             </div>
 
-            <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20 pointer-events-none">
+            <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20">
                 <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">
                     {item.title}
                 </h3>
-                {isDownloading && (
+                {actionLoading && (
                     <p className="flex items-center gap-2 text-sm text-sky font-bold mt-2">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Fetching...
+                        <Loader2 className="w-4 h-4 animate-spin" /> 
+                        {actionLoading === 'view' ? 'Opening...' : 'Fetching...'}
                     </p>
                 )}
             </div>

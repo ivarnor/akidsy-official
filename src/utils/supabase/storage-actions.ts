@@ -34,12 +34,12 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
 
         if (error || !data?.signedUrl) {
             console.error('Error generating signed URL:', error);
-            return { url: null, error: 'Could not load asset. Please try again later.' };
+            return null;
         }
 
-        return { url: data.signedUrl, error: null };
+        return data.signedUrl;
     } catch (err: any) {
         console.error('Unexpected error in getSignedUrl:', err);
-        return { url: null, error: err.message || 'An unexpected error occurred.' };
+        return null;
     }
 }

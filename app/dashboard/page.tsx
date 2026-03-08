@@ -10,6 +10,7 @@ import { VideoPlayerModal } from '@/src/components/VideoPlayerModal';
 import DashboardHeader from '@/src/components/DashboardHeader';
 import { WelcomePopup } from '@/src/components/WelcomePopup';
 import { PrintableCard } from '@/src/components/PrintableCard';
+import { getSignedUrl } from '@/src/utils/supabase/storage-actions';
 
 function CategoryItemCard({ item, supabase, onClick }: { item: any; supabase: any; onClick: () => void }) {
   const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
@@ -101,21 +102,18 @@ function DashboardContent() {
   const handleDownloadBonus = async () => {
     setIsDownloadingBonus(true);
     try {
-      const { data, error } = await supabase.storage
-        .from('bonus content')
-        .createSignedUrl('bonus-coloring-world-200.pdf', 60, {
-          download: true,
-        });
+      // Use server action for consistent logic and bypass
+      const signedUrl = await getSignedUrl('bonus content', 'bonus-coloring-world-200.pdf', 60);
       
-      if (error || !data) {
-        console.error('Error generating signed URL:', error);
+      if (!signedUrl) {
+        console.error('Error generating signed URL');
         alert('Could not generate download link. Please try again later.');
         return;
       }
       
       // Force trigger download
       const link = document.createElement('a');
-      link.href = data.signedUrl;
+      link.href = signedUrl;
       link.setAttribute('download', 'bonus-coloring-world-200.pdf');
       document.body.appendChild(link);
       link.click();
