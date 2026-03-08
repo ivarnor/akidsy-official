@@ -40,11 +40,14 @@ export async function POST(req: Request) {
 
         console.log(`Processing successful checkout: Customer=${customerId}, Email=${customerEmail}, Ref=${clientReferenceId}`);
 
+        const priceId = session.metadata?.price_id || null;
+
         // Define the update payload
         const updateData = {
             is_member: true,
             stripe_customer_id: customerId,
-            subscription_status: 'active'
+            subscription_status: 'active',
+            ...(priceId && { price_id: priceId })
         };
 
         // Try to update by client_reference_id first (assuming it's the Supabase user ID)

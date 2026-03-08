@@ -43,7 +43,13 @@ export async function POST(req: Request) {
             ],
             mode: 'subscription',
             subscription_data: {
-                trial_period_days: 7
+                trial_period_days: 7,
+                metadata: {
+                    price_id: actualPriceId
+                }
+            },
+            metadata: {
+                price_id: actualPriceId
             },
             success_url: `https://www.akidsy.com/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `https://www.akidsy.com/?canceled=true`,

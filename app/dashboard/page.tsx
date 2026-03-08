@@ -23,6 +23,37 @@ function DashboardContent() {
   const [selectedPdf, setSelectedPdf] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
   const [selectedVideo, setSelectedVideo] = useState<{ url: string | null, title: string }>({ url: null, title: '' });
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
+  const [isYearlyMember, setIsYearlyMember] = useState(false);
+  const [isDownloadingBonus, setIsDownloadingBonus] = useState(false);
+
+  const handleDownloadBonus = async () => {
+    setIsDownloadingBonus(true);
+    try {
+      const { data, error } = await supabase.storage
+        .from('bonus content')
+        .createSignedUrl('bonus-coloring-world-200.pdf', 60, {
+          download: true,
+        });
+      
+      if (error || !data) {
+        console.error('Error generating signed URL:', error);
+        alert('Could not generate download link. Please try again later.');
+        return;
+      }
+      
+      // Force trigger download
+      const link = document.createElement('a');
+      link.href = data.signedUrl;
+      link.setAttribute('download', 'bonus-coloring-world-200.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Unexpected error downloading bonus:', err);
+    } finally {
+      setIsDownloadingBonus(false);
+    }
+  };
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
@@ -71,7 +102,7 @@ function DashboardContent() {
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('show_coloring, show_videos, show_puzzles')
+          .select('show_coloring, show_videos, show_puzzles, price_id')
           .eq('id', user.id)
           .maybeSingle(); // Changed from .single() to .maybeSingle() to gracefully handle 0 rows
 
@@ -83,6 +114,9 @@ function DashboardContent() {
           if (profile.show_coloring === false) excludedCategories.push('Coloring books');
           if (profile.show_videos === false) excludedCategories.push('Videos');
           if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
+          if (profile.price_id === 'price_1T6xwUC1HhLD0dXEgMU4i54M') {
+            setIsYearlyMember(true);
+          }
         }
       } catch (err) {
         console.error('Unexpected error fetching profile details:', err);
@@ -161,6 +195,59 @@ function DashboardContent() {
         <Star className="absolute -top-4 -right-4 w-32 h-32 text-sunshine fill-sunshine opacity-30 rotate-12" />
         <Star className="absolute bottom-8 right-24 w-16 h-16 text-persimmon fill-persimmon opacity-20 -rotate-12" />
       </div>
+
+      {/* Yearly Member Perks - Only visible to Yearly Members */}
+      {isYearlyMember && currentCategory === 'Home' && (
+        <div className="bg-gradient-to-br from-sunshine to-[#FFAE00] border-4 border-navy rounded-[3rem] p-8 mt-12 shadow-[10px_10px_0px_0px_#1C304A] relative overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <div className="flex-1 space-y-4">
+              <div className="inline-flex items-center gap-2 bg-white text-navy px-4 py-2 rounded-full border-2 border-navy font-black text-sm uppercase tracking-widest shadow-[2px_2px_0px_0px_#1C304A]">
+                <Star className="w-4 h-4 fill-navy text-navy" />
+                Yearly Member Perks
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black text-navy leading-tight">
+                Bonus Coloring World
+              </h2>
+              <p className="text-xl text-navy/90 font-bold max-w-lg">
+                Thank you for being a Yearly Member! Download your exclusive massive coloring book bundle today.
+              </p>
+              
+              <button 
+                onClick={handleDownloadBonus}
+                disabled={isDownloadingBonus}
+                className="mt-6 flex items-center justify-center gap-3 bg-navy text-white text-lg font-black px-8 py-4 rounded-full border-4 border-navy hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1C304A] hover:bg-sky transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group w-full md:w-auto"
+              >
+                {isDownloadingBonus ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" /> 
+                    Preparing Download...
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="w-6 h-6 group-hover:scale-110 transition-transform" /> 
+                    Download 200-Page Bonus
+                  </>
+                )}
+              </button>
+            </div>
+            
+            <div className="w-full md:w-[350px] relative aspect-square bg-white border-4 border-navy rounded-3xl shadow-[6px_6px_0px_0px_#1C304A] flex items-center justify-center -rotate-3 overflow-hidden group">
+              {/* Replace the bg-cream with an icon if true image is unavailable, until then we simulate a high quality cover */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-sky/20 to-persimmon/20" />
+              <div className="z-10 text-center p-6 space-y-4">
+                <Sparkles className="w-16 h-16 text-persimmon fill-persimmon mx-auto group-hover:scale-110 transition-transform duration-500" />
+                <div className="font-black text-3xl text-navy uppercase tracking-tight">200 Pages</div>
+                <div className="font-bold text-xl text-sky">Of Fun!</div>
+              </div>
+              
+              {/* Badge */}
+              <div className="absolute -top-4 -right-4 bg-persimmon text-white text-sm font-black px-4 py-4 rounded-full border-4 border-navy shadow-[4px_4px_0px_0px_#1C304A] rotate-12 flex items-center justify-center w-24 h-24 text-center leading-tight">
+                Bonus<br/>Edition!
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content Grid */}
       <div>
