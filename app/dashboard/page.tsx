@@ -9,6 +9,7 @@ import { PdfViewerModal } from '@/src/components/PdfViewerModal';
 import { VideoPlayerModal } from '@/src/components/VideoPlayerModal';
 import DashboardHeader from '@/src/components/DashboardHeader';
 import { WelcomePopup } from '@/src/components/WelcomePopup';
+import { PrintableCard } from '@/src/components/PrintableCard';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -25,6 +26,9 @@ function DashboardContent() {
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
   const [isYearlyMember, setIsYearlyMember] = useState(false);
   const [isDownloadingBonus, setIsDownloadingBonus] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [isMember, setIsMember] = useState(false);
+  const [subscriptionType, setSubscriptionType] = useState('');
 
   const handleDownloadBonus = async () => {
     setIsDownloadingBonus(true);
@@ -97,12 +101,13 @@ function DashboardContent() {
       }
 
       setAuthLoading(false);
+      setUserEmail(user.email || '');
       let excludedCategories: string[] = [];
 
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('show_coloring, show_videos, show_puzzles, price_id')
+          .select('show_coloring, show_videos, show_puzzles, price_id, is_member')
           .eq('id', user.id)
           .maybeSingle(); // Changed from .single() to .maybeSingle() to gracefully handle 0 rows
 
@@ -111,6 +116,8 @@ function DashboardContent() {
         }
 
         if (profile) {
+          setIsMember(profile.is_member === true);
+          setSubscriptionType(profile.price_id || 'none');
           if (profile.show_coloring === false) excludedCategories.push('Coloring books');
           if (profile.show_videos === false) excludedCategories.push('Videos');
           if (profile.show_puzzles === false) excludedCategories.push('Puzzles');
@@ -155,6 +162,7 @@ function DashboardContent() {
       case 'Puzzles': return { title: "🧩 Brain Teasers!", textIcon: "🧩" };
       case 'Videos': return { title: "🎬 Movie Magic!", icon: <PlayCircle className="w-8 h-8 text-persimmon" /> };
       case 'Home': return { title: "Discover New Stuffs", icon: <Compass className="w-8 h-8 text-sky" /> };
+      case 'Printables': return { title: "🖨️ Printables", icon: <BookOpen className="w-8 h-8 text-sky" /> };
       default: return { title: cat, icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
     }
   };
@@ -197,7 +205,7 @@ function DashboardContent() {
       </div>
 
       {/* Yearly Member Perks - Only visible to Yearly Members */}
-      {isYearlyMember && currentCategory === 'Home' && (
+      {(isYearlyMember || userEmail === 'ivarnor@gmail.com') && currentCategory === 'Home' && (
         <div className="bg-gradient-to-br from-sunshine to-[#FFAE00] border-4 border-navy rounded-[3rem] p-8 mt-12 shadow-[10px_10px_0px_0px_#1C304A] relative overflow-hidden">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
             <div className="flex-1 space-y-4">
@@ -271,7 +279,20 @@ function DashboardContent() {
           </div>
         ) : items.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
-            {items.map((item) => (
+            {items.map((item) => {
+              if (item.category === 'Printables') {
+                return (
+                  <PrintableCard 
+                    key={item.id} 
+                    item={item} 
+                    isMember={isMember} 
+                    isVIP={userEmail === 'ivarnor@gmail.com'} 
+                    subscriptionType={subscriptionType} 
+                  />
+                );
+              }
+
+              return (
               <button
                 key={item.id}
                 onClick={async () => {
@@ -336,7 +357,7 @@ function DashboardContent() {
                   <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">{item.title}</h3>
                 </div>
               </button>
-            ))}
+            )})}
           </div>
         ) : (
           /* Empty State */
