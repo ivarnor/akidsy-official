@@ -103,7 +103,8 @@ function DashboardContent() {
     setIsDownloadingBonus(true);
     try {
       // Use server action for consistent logic and bypass
-      const signedUrl = await getSignedUrl('bonus content', 'bonus-coloring-world-200.pdf', 60);
+      const result = await getSignedUrl('bonus content', 'bonus-coloring-world-200.pdf', 60);
+      const signedUrl = result?.data?.signedUrl;
       
       if (!signedUrl) {
         console.error('Error generating signed URL');

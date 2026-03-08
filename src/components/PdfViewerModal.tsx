@@ -46,7 +46,8 @@ export function PdfViewerModal({
                     const { getSignedUrl } = await import('@/src/utils/supabase/storage-actions');
                     
                     // Generate Signed URL
-                    const signedUrl = await getSignedUrl(bucket, path, 60);
+                    const result = await getSignedUrl(bucket, path, 60);
+                    const signedUrl = result?.data?.signedUrl;
 
                     if (!signedUrl) {
                         throw new Error('Could not load PDF securely. Please try again later.');

@@ -808,10 +808,7 @@ export default function AdminPage() {
                                     </div>
 
                                     <div className="p-4 flex-1 flex flex-col">
-                                        <h3 className="text-sm font-bold text-white line-clamp-1 mb-1" title={item.title}>{item.title}</h3>
-                                        <p className="text-xs text-slate-500 font-mono truncate mb-4">
-                                            {item.url}
-                                        </p>
+                                        <h3 className="text-sm font-bold text-white line-clamp-1 mb-4" title={item.title}>{item.title}</h3>
 
                                         <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-800">
                                             <span className="text-[10px] text-slate-500 font-medium">

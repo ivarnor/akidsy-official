@@ -50,11 +50,12 @@ export function PrintableCard({
 
         try {
             // Use server action for consistent logic and bypass
-            const signedUrl = await getSignedUrl('content', item.url, 60);
+            const result = await getSignedUrl('content', item.url, 60);
+            const signedUrl = result?.data?.signedUrl;
 
             if (!signedUrl) {
-                console.error('Error creating signed URL');
-                alert('Access Denied or File Not Found. Could not generate secure link.');
+                console.error('Error generating signed URL');
+                alert('Could not generate secure link. Please try again later.');
                 return;
             }
 

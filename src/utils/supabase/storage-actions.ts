@@ -9,7 +9,7 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
         // 1. Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            return null;
+            return { data: null, error: authError || 'Not authenticated' };
         }
 
         // 2. Check if user is a member (Admin Bypass included)
@@ -23,7 +23,7 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
                 .single();
 
             if (profileError || !profile?.is_member) {
-                return null;
+                return { data: null, error: profileError || 'Not a member' };
             }
         }
 
@@ -34,12 +34,12 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
 
         if (error || !data?.signedUrl) {
             console.error('Error generating signed URL:', error);
-            return null;
+            return { data: null, error };
         }
 
-        return data.signedUrl;
+        return { data, error: null };
     } catch (err: any) {
         console.error('Unexpected error in getSignedUrl:', err);
-        return null;
+        return { data: null, error: err };
     }
 }
