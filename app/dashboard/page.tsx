@@ -11,6 +11,74 @@ import DashboardHeader from '@/src/components/DashboardHeader';
 import { WelcomePopup } from '@/src/components/WelcomePopup';
 import { PrintableCard } from '@/src/components/PrintableCard';
 
+function CategoryItemCard({ item, supabase, onClick }: { item: any; supabase: any; onClick: () => void }) {
+  const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
+  const [imageError, setImageError] = useState(false);
+  const hasThumb = item.thumbnail_url && item.thumbnail_url.trim() !== '';
+  const thumbnailUrl = hasThumb 
+    ? item.thumbnail_url.startsWith('http') ? item.thumbnail_url : (THUMBNAIL_BASE_URL + item.thumbnail_url)
+    : '/images/akidsy-placeholder.png';
+
+  useEffect(() => {
+    console.log('Image Source:', thumbnailUrl);
+  }, [thumbnailUrl]);
+
+  return (
+    <button
+      onClick={onClick}
+      className={`group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none outline-none focus-visible:ring-4 ring-sky ring-offset-2`}
+    >
+      {/* Thumbnail Area - Book Cover style */}
+      <div className="aspect-[4/5] relative overflow-hidden bg-cream border-b-4 border-navy w-full">
+        {thumbnailUrl && !imageError ? (
+          <Image
+            src={thumbnailUrl}
+            alt={item.title}
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            unoptimized={true}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-cream">
+            <Image 
+              src="/images/akidsy-placeholder.png"
+              alt="Akidsy Placeholder"
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+
+        {/* Category Badge */}
+        <div className="absolute top-3 left-3 z-20">
+          <span className="bg-white text-navy text-[10px] md:text-xs font-black px-2.5 py-1 md:py-1.5 rounded-full border-2 border-navy shadow-[2px_2px_0px_0px_#1C304A] uppercase tracking-tighter">
+            {item.category}
+          </span>
+        </div>
+
+        {/* Hover Overlay */}
+        <div className={`absolute inset-0 bg-navy/40 backdrop-blur-[2px] transition-opacity duration-300 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100`}>
+          <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
+            {item.category === 'Videos' ? (
+              <PlayCircle className="w-10 h-10 text-persimmon" />
+            ) : (
+              <BookOpen className="w-10 h-10 text-sky" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Info Area */}
+      <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20">
+        <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">{item.title}</h3>
+      </div>
+    </button>
+  );
+}
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -131,7 +199,7 @@ function DashboardContent() {
 
       let query = supabase.from('content').select('*').order('created_at', { ascending: false });
 
-      if (excludedCategories.length > 0) {
+      if (excludedCategories.length > 0 && user.email !== 'ivarnor@gmail.com') {
         query = query.not('category', 'in', `(${excludedCategories.map(c => `"${c}"`).join(',')})`);
       }
 
@@ -293,71 +361,32 @@ function DashboardContent() {
               }
 
               return (
-              <button
-                key={item.id}
-                onClick={async () => {
-                  if (item.url) {
-                    try {
-                      fetch('/api/content/view', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: item.id })
-                      }).catch(console.error);
-                    } catch (e) { }
+                <CategoryItemCard
+                  key={item.id}
+                  item={item}
+                  supabase={supabase}
+                  onClick={async () => {
+                    if (item.url) {
+                      try {
+                        fetch('/api/content/view', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: item.id })
+                        }).catch(console.error);
+                      } catch (e) { }
 
-                    if (item.category === 'Coloring books') {
-                      setSelectedPdf({ url: item.url, title: item.title });
-                    } else if (item.category === 'Videos') {
-                      setSelectedVideo({ url: item.url, title: item.title });
-                    } else {
-                      window.open(item.url, '_blank');
+                      if (item.category === 'Coloring books') {
+                        setSelectedPdf({ url: item.url, title: item.title });
+                      } else if (item.category === 'Videos') {
+                        setSelectedVideo({ url: item.url, title: item.title });
+                      } else {
+                        window.open(item.url, '_blank');
+                      }
                     }
-                  }
-                }}
-                className={`group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none outline-none focus-visible:ring-4 ring-sky ring-offset-2`}
-              >
-                {/* Thumbnail Area - Book Cover style */}
-                <div className="aspect-[4/5] relative overflow-hidden bg-cream border-b-4 border-navy w-full">
-                  {item.thumbnail_url ? (
-                    <Image
-                      src={item.thumbnail_url}
-                      alt={item.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-sky/10">
-                      <Sparkles className="w-12 h-12 text-sky/30" />
-                    </div>
-                  )}
-
-                  {/* Category Badge */}
-                  <div className="absolute top-3 left-3 z-20">
-                    <span className="bg-white text-navy text-[10px] md:text-xs font-black px-2.5 py-1 md:py-1.5 rounded-full border-2 border-navy shadow-[2px_2px_0px_0px_#1C304A] uppercase tracking-tighter">
-                      {item.category}
-                    </span>
-                  </div>
-
-                  {/* Hover Overlay */}
-                  <div className={`absolute inset-0 bg-navy/40 backdrop-blur-[2px] transition-opacity duration-300 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100`}>
-                    <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
-                      {item.category === 'Videos' ? (
-                        <PlayCircle className="w-10 h-10 text-persimmon" />
-                      ) : (
-                        <BookOpen className="w-10 h-10 text-sky" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Info Area */}
-                <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20">
-                  <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">{item.title}</h3>
-                </div>
-              </button>
-            )})}
+                  }}
+                />
+              );
+            })}
           </div>
         ) : (
           /* Empty State */

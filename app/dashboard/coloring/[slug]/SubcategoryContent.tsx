@@ -7,6 +7,65 @@ import { createClient } from '@/src/utils/supabase/client';
 import { Palette, Sparkles, Loader2, ArrowLeft, BookOpen } from 'lucide-react';
 import { PdfViewerModal } from '@/src/components/PdfViewerModal';
 
+function SubcategoryItemCard({ item, onClick }: { item: any; onClick: () => void }) {
+    const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
+    const [imageError, setImageError] = useState(false);
+    const hasThumb = item.thumbnail_url && item.thumbnail_url.trim() !== '';
+    const thumbnailUrl = hasThumb
+        ? item.thumbnail_url.startsWith('http') ? item.thumbnail_url : (THUMBNAIL_BASE_URL + item.thumbnail_url)
+        : '/images/akidsy-placeholder.png';
+
+    useEffect(() => {
+        console.log('Image Source:', thumbnailUrl);
+    }, [thumbnailUrl]);
+
+    return (
+        <button
+            onClick={onClick}
+            className="group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none"
+        >
+            {/* Thumbnail Area */}
+            <div className="aspect-[4/5] relative overflow-hidden bg-cream border-b-4 border-navy w-full">
+                {thumbnailUrl && !imageError ? (
+                    <Image
+                        src={thumbnailUrl}
+                        alt={item.title}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                        unoptimized={true}
+                        onError={() => setImageError(true)}
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-cream">
+                        <Image
+                            src="/images/akidsy-placeholder.png"
+                            alt="Akidsy Placeholder"
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
+                )}
+
+                {/* Overlay Icon */}
+                <div className="absolute inset-0 bg-navy/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
+                    <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
+                        <BookOpen className="w-10 h-10 text-sky" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Info Area */}
+            <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20">
+                <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">
+                    {item.title}
+                </h3>
+            </div>
+        </button>
+    );
+}
+
 export default function SubcategoryContent({ slug }: { slug: string }) {
     const supabase = createClient();
     const [items, setItems] = useState<any[]>([]);
@@ -74,8 +133,9 @@ export default function SubcategoryContent({ slug }: { slug: string }) {
             ) : items.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
                     {items.map((item) => (
-                        <button
+                        <SubcategoryItemCard
                             key={item.id}
+                            item={item}
                             onClick={() => {
                                 if (item.url) {
                                     fetch('/api/content/view', {
@@ -87,40 +147,7 @@ export default function SubcategoryContent({ slug }: { slug: string }) {
                                     setSelectedPdf({ url: item.url, title: item.title });
                                 }
                             }}
-                            className="group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none outline-none focus-visible:ring-4 ring-sky ring-offset-2"
-                        >
-                            {/* Thumbnail Area */}
-                            <div className="aspect-[4/5] relative overflow-hidden bg-cream w-full border-b-4 border-navy">
-                                {item.thumbnail_url ? (
-                                    <Image
-                                        src={item.thumbnail_url}
-                                        alt={item.title}
-                                        fill
-                                        className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                                        referrerPolicy="no-referrer"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-sky/10">
-                                        <Sparkles className="w-12 h-12 text-sky/30" />
-                                    </div>
-                                )}
-
-                                {/* Overlay Icon */}
-                                <div className="absolute inset-0 bg-navy/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
-                                    <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
-                                        <BookOpen className="w-10 h-10 text-sky" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Info Area */}
-                            <div className="p-4 flex-1 flex flex-col justify-center bg-white relative z-20">
-                                <h3 className="text-lg md:text-xl font-black text-navy line-clamp-2 leading-tight group-hover:text-sky transition-colors">
-                                    {item.title}
-                                </h3>
-                            </div>
-                        </button>
+                        />
                     ))}
                 </div>
             ) : (

@@ -17,13 +17,18 @@ export function PrintableCard({
     subscriptionType: string;
 }) {
     const supabase = createClient();
+    const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
+    const [imageError, setImageError] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
 
-    // 2. Fix PNG Thumbnails: use getPublicUrl 
+    // 1. Construct the Public URL using the base path + filename
     const hasThumb = item.thumbnail_url && item.thumbnail_url.trim() !== '';
-    const thumbnailUrl = hasThumb && !item.thumbnail_url.startsWith('http')
-        ? supabase.storage.from('thumbnails').getPublicUrl(item.thumbnail_url).data.publicUrl
-        : item.thumbnail_url;
+    const thumbnailUrl = hasThumb 
+        ? item.thumbnail_url.startsWith('http') ? item.thumbnail_url : (THUMBNAIL_BASE_URL + item.thumbnail_url)
+        : '/images/akidsy-placeholder.png';
+
+    // 4. Add console.log for debugging
+    console.log('Image Source:', thumbnailUrl);
 
     const handleDownload = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -74,7 +79,7 @@ export function PrintableCard({
     return (
         <div className="group w-full text-left bg-white border-4 border-navy rounded-[2rem] overflow-hidden shadow-[6px_6px_0px_0px_#1C304A] hover:shadow-[10px_10px_0px_0px_#1C304A] hover:-translate-y-2 transition-all duration-300 flex flex-col active:translate-y-1 active:shadow-none relative">
             <div className="aspect-[4/5] relative overflow-hidden bg-cream border-b-4 border-navy w-full">
-                {thumbnailUrl ? (
+                {thumbnailUrl && !imageError ? (
                     <Image
                         src={thumbnailUrl}
                         alt={item.title}
@@ -83,10 +88,16 @@ export function PrintableCard({
                         referrerPolicy="no-referrer"
                         loading="lazy"
                         unoptimized={true}
+                        onError={() => setImageError(true)}
                     />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-sky/10">
-                        <Sparkles className="w-12 h-12 text-sky/30" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-cream">
+                        <Image 
+                            src="/images/akidsy-placeholder.png"
+                            alt="Akidsy Placeholder"
+                            fill
+                            className="object-cover"
+                        />
                     </div>
                 )}
                 
