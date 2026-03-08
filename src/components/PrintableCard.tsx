@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { createClient } from '@/src/utils/supabase/client';
-import { Download, Eye, Loader2, Sparkles } from 'lucide-react';
-import { getSignedUrl } from '@/src/utils/supabase/storage-actions';
+import { Download, Eye, Loader2 } from 'lucide-react';
 
 export function PrintableCard({ 
     item, 
@@ -17,19 +15,51 @@ export function PrintableCard({
     isVIP: boolean;
     subscriptionType: string;
 }) {
-    const supabase = createClient();
     const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
     const [imageError, setImageError] = useState(false);
     const [actionLoading, setActionLoading] = useState<'view' | 'download' | null>(null);
 
-    // 1. Construct the Public URL using the base path + filename
+    // Construct thumbnail URL
     const hasThumb = item.thumbnail_url && item.thumbnail_url.trim() !== '';
     const thumbnailUrl = hasThumb 
         ? item.thumbnail_url.startsWith('http') ? item.thumbnail_url : (THUMBNAIL_BASE_URL + item.thumbnail_url)
         : '/images/akidsy-placeholder.png';
 
-    // 4. Add console.log for debugging
-    console.log('Image Source:', thumbnailUrl);
+    console.log('Printable Image Source:', thumbnailUrl);
+
+    /**
+     * Determines the correct bucket and file path from item.url.
+     * item.url can be:
+     *   - A plain filename: "Bear Coloring pages.pdf"            -> bucket: 'content'
+     *   - A path with prefix: "content/abc123.pdf"               -> bucket: 'content-assets'
+     *   - A full public URL: "https://...supabase.co/.../content/abc.pdf"
+     */
+    function resolveBucketAndPath(): { bucket: string; path: string } {
+        const rawUrl = item.url || '';
+
+        // Case 1: Full Supabase public URL
+        if (rawUrl.startsWith('http') && rawUrl.includes('/storage/v1/object/public/')) {
+            try {
+                const urlObj = new URL(rawUrl);
+                const afterPublic = urlObj.pathname.split('/storage/v1/object/public/')[1] || '';
+                const slashIdx = afterPublic.indexOf('/');
+                if (slashIdx > -1) {
+                    return {
+                        bucket: afterPublic.substring(0, slashIdx),
+                        path: afterPublic.substring(slashIdx + 1).split('?')[0],
+                    };
+                }
+            } catch (_) { /* fall through */ }
+        }
+
+        // Case 2: Path-style URL like "content/abc123.pdf" (content-assets bucket)
+        if (rawUrl.includes('/') && !rawUrl.startsWith('http')) {
+            return { bucket: 'content-assets', path: rawUrl };
+        }
+
+        // Case 3: Just a filename like "Bear Coloring pages.pdf" (content bucket)
+        return { bucket: 'content', path: rawUrl };
+    }
 
     const handleAction = async (e: React.MouseEvent, mode: 'view' | 'download') => {
         e.preventDefault();
@@ -37,9 +67,7 @@ export function PrintableCard({
 
         if (actionLoading) return;
 
-        console.log("Action Mode:", mode);
-        console.log("User Subscription Status:", subscriptionType);
-        console.log("Is Member:", isMember, "Is VIP:", isVIP);
+        console.log('[PrintableCard] Action:', mode, '| Subscription:', subscriptionType, '| isMember:', isMember, '| isVIP:', isVIP);
 
         if (!isMember && !isVIP) {
             alert('Access Denied. You need an active subscription to access this content.');
@@ -49,55 +77,41 @@ export function PrintableCard({
         setActionLoading(mode);
 
         try {
-            // item.url is stored as a full public URL like:
-            // https://xxx.supabase.co/storage/v1/object/public/content-assets/printables/file.pdf
-            // createSignedUrl needs only the path AFTER the bucket name: "printables/file.pdf"
-            // NOTE: We always fetch from content-assets (PDF bucket), NOT the thumbnails bucket.
-            const BUCKET = 'content-assets';
-            let filePath = item.url;
-            if (filePath && filePath.includes(`/${BUCKET}/`)) {
-                filePath = filePath.split(`/${BUCKET}/`)[1]?.split('?')[0] || filePath;
-            }
-            console.log('[PDF Fix] Fetching signed URL from BUCKET:', BUCKET);
-            console.log('[PDF Fix] Resolved file path for signed URL:', filePath);
+            const { bucket, path } = resolveBucketAndPath();
+            console.log(`[PrintableCard] Resolved bucket="${bucket}" path="${path}"`);
 
-            const result = await getSignedUrl(BUCKET, filePath, 60);
-            const signedUrl = result?.data?.signedUrl;
-
-            if (!signedUrl) {
-                console.error('Error generating signed URL');
-                alert('Could not generate secure link. Please try again later.');
-                return;
-            }
-
-            // ADDED: console.log to verify the final URL
-            console.log('Final Signed URL being opened:', signedUrl);
+            // Build the proxy URL which:
+            // 1. Verifies auth server-side
+            // 2. Fetches PDF from Supabase
+            // 3. Re-serves it with Content-Type: application/pdf (critical for iOS)
+            const proxyUrl = `/api/pdf-proxy?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
+            console.log('[PrintableCard] Proxy URL:', proxyUrl);
 
             if (mode === 'download') {
-                // Trigger download natively
+                // Force download using <a download> trick
                 const link = document.createElement('a');
-                link.href = signedUrl;
-                const fileName = item.url.split('/').pop() || `${item.title}.pdf`;
+                link.href = proxyUrl;
+                const fileName = path.split('/').pop() || `${item.title}.pdf`;
                 link.setAttribute('download', fileName);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
             } else {
-                // View action — use <a> tag with target='_blank' for iOS compatibility.
-                // This is the most reliable method to trigger the full iOS PDF viewer
-                // (scrollable, multi-page) instead of only showing the first page as a PNG.
-                console.log('[PDF Fix] Opening PDF via <a> tag (iOS-safe):', signedUrl);
-                const link = document.createElement('a');
-                link.href = signedUrl;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
+                // VIEW mode: Use <a target="_blank"> — the most reliable method on iOS.
+                // window.open() is frequently blocked by iOS Safari as a popup.
+                // The proxy ensures Content-Type: application/pdf so Safari opens
+                // the full multi-page PDF viewer, not a single-page PNG preview.
+                const a = document.createElement('a');
+                a.href = proxyUrl;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
             }
         } catch (err) {
-            console.error('Error during action process:', err);
-            alert('An unexpected error occurred.');
+            console.error('[PrintableCard] Error during action:', err);
+            alert('An unexpected error occurred. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -169,7 +183,7 @@ export function PrintableCard({
                 {actionLoading && (
                     <p className="flex items-center gap-2 text-sm text-sky font-bold mt-2">
                         <Loader2 className="w-4 h-4 animate-spin" /> 
-                        {actionLoading === 'view' ? 'Opening...' : 'Fetching...'}
+                        {actionLoading === 'view' ? 'Opening...' : 'Downloading...'}
                     </p>
                 )}
             </div>

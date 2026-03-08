@@ -1,7 +1,47 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, Printer, X, Sparkles } from 'lucide-react';
+import { Loader2, Printer, X, Sparkles, ExternalLink } from 'lucide-react';
+
+/**
+ * Determines the correct bucket and file path from a raw URL string.
+ * Handles:
+ *   - Plain filenames: "Bear Coloring pages.pdf" → bucket: 'content'
+ *   - Path-style: "content/abc123.pdf"            → bucket: 'content-assets'
+ *   - Full public URLs: "https://...supabase.co/storage/v1/object/public/content/..."
+ */
+function resolveBucketAndPath(rawUrl: string): { bucket: string; path: string } {
+    if (!rawUrl) return { bucket: 'content', path: rawUrl };
+
+    // Full Supabase public URL
+    if (rawUrl.startsWith('http') && rawUrl.includes('/storage/v1/object/public/')) {
+        try {
+            const urlObj = new URL(rawUrl);
+            const afterPublic = urlObj.pathname.split('/storage/v1/object/public/')[1] || '';
+            const slashIdx = afterPublic.indexOf('/');
+            if (slashIdx > -1) {
+                return {
+                    bucket: afterPublic.substring(0, slashIdx),
+                    path: afterPublic.substring(slashIdx + 1).split('?')[0],
+                };
+            }
+        } catch (_) { /* fall through */ }
+    }
+
+    // Path-style URL like "content/abc123.pdf" (content-assets bucket)
+    if (rawUrl.includes('/') && !rawUrl.startsWith('http')) {
+        return { bucket: 'content-assets', path: rawUrl };
+    }
+
+    // Plain filename like "Bear Coloring pages.pdf" (content bucket)
+    return { bucket: 'content', path: rawUrl };
+}
+
+function isIOS(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
 
 export function PdfViewerModal({
     url,
@@ -12,85 +52,66 @@ export function PdfViewerModal({
     onClose: () => void;
     title: string;
 }) {
-    const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    const [proxyUrl, setProxyUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [iosMode, setIosMode] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
         if (!url) {
-            setBlobUrl(null);
+            setProxyUrl(null);
             return;
         }
 
-        let isMounted = true;
+        const ios = isIOS();
+        setIosMode(ios);
         setLoading(true);
         setError(null);
+        setProxyUrl(null);
 
-        async function fetchPdf() {
-            try {
-                let fetchUrl = url as string;
+        const { bucket, path } = resolveBucketAndPath(url);
+        console.log(`[PdfViewerModal] bucket="${bucket}" path="${path}" isIOS=${ios}`);
 
-                // Determine if we need to sign the URL (either it's a public Supabase URL or a raw path)
-                if (fetchUrl.includes('/storage/v1/object/public/') || !fetchUrl.startsWith('http')) {
-                    let bucket = 'content'; // Default bucket for standard printables
-                    let path = fetchUrl;
+        // Build the proxy URL — the proxy serves the PDF with Content-Type: application/pdf
+        // which is critical for Safari to open the full multi-page viewer.
+        const pUrl = `/api/pdf-proxy?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
 
-                    if (fetchUrl.includes('/storage/v1/object/public/')) {
-                        const urlObj = new URL(fetchUrl);
-                        const pathParts = urlObj.pathname.split('/storage/v1/object/public/')[1].split('/');
-                        bucket = pathParts[0];
-                        path = pathParts.slice(1).join('/');
-                    }
-
-                    const { getSignedUrl } = await import('@/src/utils/supabase/storage-actions');
-                    
-                    // Generate Signed URL
-                    const result = await getSignedUrl(bucket, path, 60);
-                    const signedUrl = result?.data?.signedUrl;
-
-                    if (!signedUrl) {
-                        throw new Error('Could not load PDF securely. Please try again later.');
-                    }
-
-                    fetchUrl = signedUrl;
-                }
-
-                // Fetch the PDF as a blob to create a secure local object URL
-                // This hides the true Supabase URL from the DOM and prevents CORS issues when printing
-                const response = await fetch(fetchUrl);
-                if (!response.ok) throw new Error('Failed to load PDF securely.');
-
-                const blob = await response.blob();
-
-                if (isMounted) {
-                    const objectUrl = URL.createObjectURL(blob);
-                    // Append #toolbar=0&navpanes=0 to hide default browser PDF controls
-                    setBlobUrl(objectUrl + '#toolbar=0&navpanes=0');
-                    setLoading(false);
-                }
-            } catch (err: any) {
-                if (isMounted) {
-                    setError(err.message || 'Error pulling the document.');
-                    setLoading(false);
-                }
-            }
+        if (ios) {
+            // On iOS, iframes don't render PDFs. Instead, open directly in new tab.
+            // We open it immediately and skip loading the iframe entirely.
+            const a = document.createElement('a');
+            a.href = pUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setLoading(false);
+            // Close the modal since the PDF is opening in the browser tab
+            onClose();
+        } else {
+            // Desktop/Android: use iframe with the proxy URL (Content-Type header ensures correct rendering)
+            setProxyUrl(pUrl);
+            setLoading(false);
         }
-
-        fetchPdf();
-
-        return () => {
-            isMounted = false;
-            // Cleanup the blob URL when unmounting or changing URLs
-            if (blobUrl) {
-                URL.revokeObjectURL(blobUrl.split('#')[0]);
-            }
-        };
     }, [url]);
 
     const handlePrint = () => {
-        if (iframeRef.current && iframeRef.current.contentWindow) {
+        if (iframeRef.current?.contentWindow) {
             iframeRef.current.contentWindow.print();
+        }
+    };
+
+    const handleOpenInNewTab = () => {
+        if (proxyUrl) {
+            const a = document.createElement('a');
+            a.href = proxyUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         }
     };
 
@@ -112,8 +133,20 @@ export function PdfViewerModal({
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                        {/* Only show print button if the PDF is successfully loaded */}
-                        {blobUrl && !loading && !error && (
+                        {/* Open in new tab button */}
+                        {proxyUrl && !loading && !error && (
+                            <button
+                                onClick={handleOpenInNewTab}
+                                className="bg-sky text-white font-black text-sm md:text-base px-4 md:px-6 py-2.5 rounded-xl border-4 border-navy hover:bg-sky/90 transition-transform hover:scale-105 active:scale-95 shadow-[4px_4px_0px_0px_#1C304A] flex items-center gap-2"
+                                title="Open in new tab"
+                            >
+                                <ExternalLink className="w-5 h-5" />
+                                <span className="hidden md:inline">Open Full</span>
+                            </button>
+                        )}
+
+                        {/* Print button - desktop only */}
+                        {proxyUrl && !loading && !error && (
                             <button
                                 onClick={handlePrint}
                                 className="bg-persimmon text-white font-black text-sm md:text-base px-4 md:px-6 py-2.5 rounded-xl border-4 border-navy hover:bg-persimmon/90 transition-transform hover:scale-105 active:scale-95 shadow-[4px_4px_0px_0px_#1C304A] flex items-center gap-2"
@@ -159,12 +192,12 @@ export function PdfViewerModal({
                         </div>
                     )}
 
-                    {blobUrl && (
+                    {proxyUrl && !loading && !error && (
                         <iframe
                             ref={iframeRef}
-                            src={blobUrl}
+                            src={proxyUrl}
                             title="PDF Viewer"
-                            className={`w-full h-full border-none transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
+                            className="w-full h-full border-none"
                         />
                     )}
                 </div>
