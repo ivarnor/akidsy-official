@@ -52,12 +52,14 @@ export function PrintableCard({
             // item.url is stored as a full public URL like:
             // https://xxx.supabase.co/storage/v1/object/public/content-assets/printables/file.pdf
             // createSignedUrl needs only the path AFTER the bucket name: "printables/file.pdf"
+            // NOTE: We always fetch from content-assets (PDF bucket), NOT the thumbnails bucket.
             const BUCKET = 'content-assets';
             let filePath = item.url;
             if (filePath && filePath.includes(`/${BUCKET}/`)) {
                 filePath = filePath.split(`/${BUCKET}/`)[1]?.split('?')[0] || filePath;
             }
-            console.log('Resolved file path for signed URL:', filePath);
+            console.log('[PDF Fix] Fetching signed URL from BUCKET:', BUCKET);
+            console.log('[PDF Fix] Resolved file path for signed URL:', filePath);
 
             const result = await getSignedUrl(BUCKET, filePath, 60);
             const signedUrl = result?.data?.signedUrl;
@@ -81,8 +83,17 @@ export function PrintableCard({
                 link.click();
                 link.remove();
             } else {
-                // View action
-                window.open(signedUrl, '_blank');
+                // View action — use <a> tag with target='_blank' for iOS compatibility.
+                // This is the most reliable method to trigger the full iOS PDF viewer
+                // (scrollable, multi-page) instead of only showing the first page as a PNG.
+                console.log('[PDF Fix] Opening PDF via <a> tag (iOS-safe):', signedUrl);
+                const link = document.createElement('a');
+                link.href = signedUrl;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
             }
         } catch (err) {
             console.error('Error during action process:', err);
