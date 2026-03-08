@@ -49,8 +49,17 @@ export function PrintableCard({
         setActionLoading(mode);
 
         try {
-            // Use server action for consistent logic and bypass
-            const result = await getSignedUrl('content', item.url, 60);
+            // item.url is stored as a full public URL like:
+            // https://xxx.supabase.co/storage/v1/object/public/content-assets/printables/file.pdf
+            // createSignedUrl needs only the path AFTER the bucket name: "printables/file.pdf"
+            const BUCKET = 'content-assets';
+            let filePath = item.url;
+            if (filePath && filePath.includes(`/${BUCKET}/`)) {
+                filePath = filePath.split(`/${BUCKET}/`)[1]?.split('?')[0] || filePath;
+            }
+            console.log('Resolved file path for signed URL:', filePath);
+
+            const result = await getSignedUrl(BUCKET, filePath, 60);
             const signedUrl = result?.data?.signedUrl;
 
             if (!signedUrl) {
