@@ -38,7 +38,7 @@ export function PrintableCard({
         console.log("User Subscription Status:", subscriptionType);
         console.log("Is Member:", isMember, "Is VIP:", isVIP);
 
-        // 1. Expanded Access Control
+        // 1. Expanded Access Control (isVIP corresponds to ivarnor@gmail.com bypass)
         if (!isMember && !isVIP) {
             alert('Access Denied. You need an active subscription to access this content.');
             return;

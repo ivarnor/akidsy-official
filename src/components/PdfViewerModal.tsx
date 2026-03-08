@@ -33,7 +33,7 @@ export function PdfViewerModal({
 
                 // Determine if we need to sign the URL (either it's a public Supabase URL or a raw path)
                 if (fetchUrl.includes('/storage/v1/object/public/') || !fetchUrl.startsWith('http')) {
-                    let bucket = 'content-assets';
+                    let bucket = 'content'; // Default bucket for standard printables
                     let path = fetchUrl;
 
                     if (fetchUrl.includes('/storage/v1/object/public/')) {

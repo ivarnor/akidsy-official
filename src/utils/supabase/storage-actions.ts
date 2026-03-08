@@ -12,15 +12,19 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
             return { url: null, error: 'Not authenticated' };
         }
 
-        // 2. Check if user is a member
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('is_member')
-            .eq('id', user.id)
-            .single();
+        // 2. Check if user is a member (Admin Bypass included)
+        if (user.email === 'ivarnor@gmail.com') {
+            console.log('Admin bypass triggered for:', user.email);
+        } else {
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('is_member')
+                .eq('id', user.id)
+                .single();
 
-        if (profileError || !profile?.is_member) {
-            return { url: null, error: 'Access Denied. Please check your subscription status.' };
+            if (profileError || !profile?.is_member) {
+                return { url: null, error: 'Access Denied. Please check your subscription status.' };
+            }
         }
 
         // 3. Generate Signed URL
