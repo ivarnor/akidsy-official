@@ -58,6 +58,9 @@ export function PrintableCard({
                 return;
             }
 
+            // ADDED: console.log to verify the final URL
+            console.log('Final Signed URL being opened:', signedUrl);
+
             if (mode === 'download') {
                 // Trigger download natively
                 const link = document.createElement('a');

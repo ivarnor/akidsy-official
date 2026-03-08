@@ -9,7 +9,7 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
         // 1. Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            return { url: null, error: 'Not authenticated' };
+            return null;
         }
 
         // 2. Check if user is a member (Admin Bypass included)
@@ -23,7 +23,7 @@ export async function getSignedUrl(bucket: string, path: string, expiresIn: numb
                 .single();
 
             if (profileError || !profile?.is_member) {
-                return { url: null, error: 'Access Denied. Please check your subscription status.' };
+                return null;
             }
         }
 
