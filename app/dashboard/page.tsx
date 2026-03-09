@@ -98,6 +98,7 @@ function DashboardContent() {
   const [userEmail, setUserEmail] = useState('');
   const [isMember, setIsMember] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState('All');
 
   const handleDownloadBonus = async () => {
     setIsDownloadingBonus(true);
@@ -222,6 +223,34 @@ function DashboardContent() {
     fetchContent();
   }, [currentCategory, supabase, router]);
 
+  // Reset sub-tab when category changes
+  useEffect(() => {
+    setActiveSubTab('All');
+  }, [currentCategory]);
+
+  /**
+   * Resolves the sub-category label from an item.
+   * Handles two formats:
+   *   1. Slash-format in category: "Coloring Pages / Animals" -> "Animals"
+   *   2. Dedicated sub_category column: item.sub_category
+   */
+  function resolveSubCategory(item: any): string {
+    if (item.category && item.category.includes('/')) {
+      return item.category.split('/')[1].trim();
+    }
+    return item.sub_category?.trim() || '';
+  }
+
+  // Compute unique, non-empty sub-categories from the loaded items
+  const uniqueSubCategories: string[] = Array.from(
+    new Set(items.map(resolveSubCategory).filter(Boolean))
+  ).sort();
+
+  // Apply active sub-tab filter to items shown in the grid
+  const filteredItems = activeSubTab === 'All'
+    ? items
+    : items.filter(item => resolveSubCategory(item) === activeSubTab);
+
   const getCategoryDetails = (cat: string) => {
     switch (cat) {
       case 'Coloring books': return { title: "🎨 Let's Color!", icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
@@ -339,14 +368,34 @@ function DashboardContent() {
           )}
         </div>
 
+        {/* Dynamic Sub-Category Tab Bar */}
+        {!loading && uniqueSubCategories.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap mb-8">
+            {['All', ...uniqueSubCategories].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveSubTab(tab)}
+                className={`px-5 py-2 rounded-full font-black text-sm border-2 transition-all duration-200 capitalize
+                  ${
+                    activeSubTab === tab
+                      ? 'bg-navy text-white border-navy shadow-[3px_3px_0px_0px_rgba(28,48,74,0.4)] -translate-y-0.5'
+                      : 'bg-white text-navy border-navy hover:bg-sky hover:text-white hover:border-sky hover:-translate-y-0.5'
+                  }`}
+              >
+                {tab === 'All' ? '✨ All' : tab}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="w-12 h-12 text-sky animate-spin" />
             <p className="font-bold text-navy/60">Scouting the area for treasures...</p>
           </div>
-        ) : items.length > 0 ? (
+        ) : filteredItems.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               if (item.category === 'Printables') {
                 return (
                   <PrintableCard 
@@ -374,9 +423,15 @@ function DashboardContent() {
                         }).catch(console.error);
                       } catch (e) { }
 
-                      if (item.category === 'Coloring books') {
+                      // Resolve the effective category for this item
+                      // (handles slash-format: "Coloring Pages / Animals" -> uses first part)
+                      const effectiveCategory = item.category?.includes('/')
+                        ? item.category.split('/')[0].trim()
+                        : item.category;
+
+                      if (effectiveCategory === 'Coloring books') {
                         setSelectedPdf({ url: item.url, title: item.title });
-                      } else if (item.category === 'Videos') {
+                      } else if (effectiveCategory === 'Videos') {
                         setSelectedVideo({ url: item.url, title: item.title });
                       } else {
                         window.open(item.url, '_blank');
