@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getAllCategories, getSubCategories, getCategory } from '@/src/config/categories';
 
 type ContentItem = {
     id: string;
@@ -38,6 +39,7 @@ type HealthStats = {
 };
 
 export default function AdminPage() {
+    const allCategories = getAllCategories();
     const [items, setItems] = useState<ContentItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [formSubmitting, setFormSubmitting] = useState(false);
@@ -58,12 +60,14 @@ export default function AdminPage() {
 
     const [formData, setFormData] = useState({
         title: '',
-        category: 'Videos',
+        category: 'coloring-books',
         sub_category: '',
         url: '',
         description: '',
         thumbnail_url: '',
     });
+    const [isCustomSubCategory, setIsCustomSubCategory] = useState(false);
+    const [customSubCategory, setCustomSubCategory] = useState('');
 
     // Bulk JSON State
     const [bulkJson, setBulkJson] = useState('');
@@ -202,21 +206,29 @@ export default function AdminPage() {
         setFormSubmitting(true);
 
         try {
+            const payload = {
+                ...formData,
+                sub_category: formData.sub_category?.trim() || null,
+                is_published: true,
+            };
+
             const { error } = await supabase
                 .from('content')
-                .insert([formData]);
+                .insert([payload]);
 
             if (error) {
                 alert('Error saving treasure: ' + error.message);
             } else {
                 setFormData({
                     title: '',
-                    category: 'Videos',
+                    category: allCategories[0]?.slug || 'coloring-books',
                     sub_category: '',
                     url: '',
                     description: '',
                     thumbnail_url: '',
                 });
+                setIsCustomSubCategory(false);
+                setCustomSubCategory('');
                 fetchItems();
                 fetchDashboardData(); // Refresh top content
                 alert('Treasure added successfully! ✨');
@@ -251,9 +263,14 @@ export default function AdminPage() {
             for (let i = 0; i < parsedArray.length; i++) {
                 const item = parsedArray[i];
 
+                // Canonicalize category slug if given by label or alias
+                const canonicalCategory = item.category ? (getCategory(item.category)?.slug || item.category) : 'coloring-books';
+
                 // Set is_published to true explicitly for all bulk imports
                 const payload = {
                     ...item,
+                    category: canonicalCategory,
+                    sub_category: item.sub_category ? item.sub_category.trim() : null,
                     is_published: true
                 };
 
@@ -305,10 +322,11 @@ export default function AdminPage() {
                 const contentPath = extractPath(itemToDelete.url, 'content-assets') || itemToDelete.url; // If it's a video, url IS the path
                 const thumbPath = extractPath(itemToDelete.thumbnail_url, 'thumbnails') || extractPath(itemToDelete.thumbnail_url, 'content-assets'); // Fallback for old items
 
-                if (contentPath && itemToDelete.category !== 'Videos') {
+                const isVideo = itemToDelete.category === 'Videos' || itemToDelete.category === 'videos';
+                if (contentPath && !isVideo) {
                     const { error } = await supabase.storage.from('content-assets').remove([contentPath]);
                     if (error) console.error("Content storage delete error:", error);
-                } else if (contentPath && itemToDelete.category === 'Videos') {
+                } else if (contentPath && isVideo) {
                     const { error } = await supabase.storage.from('videos').remove([contentPath]);
                     if (error) console.error("Video storage delete error:", error);
                 }
@@ -583,29 +601,60 @@ export default function AdminPage() {
                                 <select
                                     className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm appearance-none cursor-pointer"
                                     value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    onChange={(e) => {
+                                        const newCat = e.target.value;
+                                        setFormData({ ...formData, category: newCat, sub_category: '' });
+                                        setIsCustomSubCategory(false);
+                                        setCustomSubCategory('');
+                                    }}
                                 >
-                                    <option>Videos</option>
-                                    <option>Coloring books</option>
-                                    <option>Ebooks</option>
-                                    <option>Puzzles</option>
-                                    <option>Education</option>
+                                    {allCategories.map((cat) => (
+                                        <option key={cat.slug} value={cat.slug}>
+                                            {cat.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-semibold text-slate-400">Sub-Category (Optional)</label>
                                 <select
-                                    className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm appearance-none cursor-pointer disabled:opacity-50"
-                                    value={formData.sub_category}
-                                    onChange={(e) => setFormData({ ...formData, sub_category: e.target.value })}
-                                    disabled={formData.category !== 'Coloring books'}
+                                    className="p-3.5 rounded-xl border border-slate-700 bg-slate-950/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm appearance-none cursor-pointer"
+                                    value={isCustomSubCategory ? '__custom__' : (formData.sub_category || '')}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '__custom__') {
+                                            setIsCustomSubCategory(true);
+                                            setFormData({ ...formData, sub_category: customSubCategory.trim() });
+                                        } else {
+                                            setIsCustomSubCategory(false);
+                                            setFormData({ ...formData, sub_category: val });
+                                        }
+                                    }}
                                 >
                                     <option value="">None</option>
-                                    <option value="animals">Animals</option>
-                                    <option value="space">Space</option>
-                                    <option value="vehicles">Vehicles</option>
+                                    {getSubCategories(formData.category).map((sub) => (
+                                        <option key={sub.slug} value={sub.slug}>
+                                            {sub.emoji} {sub.label} ({sub.slug})
+                                        </option>
+                                    ))}
+                                    <option value="__custom__">➕ Custom Slug...</option>
                                 </select>
+
+                                {isCustomSubCategory && (
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. prehistoric-times"
+                                        className="p-3 rounded-xl border border-blue-500/50 bg-slate-950 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs font-mono"
+                                        value={customSubCategory}
+                                        onChange={(e) => {
+                                            const raw = e.target.value;
+                                            const slugVal = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+                                            setCustomSubCategory(raw);
+                                            setFormData({ ...formData, sub_category: slugVal });
+                                        }}
+                                    />
+                                )}
                             </div>
                         </div>
 
@@ -625,7 +674,7 @@ export default function AdminPage() {
                             <div className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 space-y-4">
                                 <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                                     <Upload className="w-4 h-4 text-blue-500" />
-                                    Source Data {(formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '(PDF or Image)' : '(Video/Link)'}
+                                    Source Data {(formData.category === 'coloring-books' || formData.category === 'ebooks' || formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '(PDF or Image)' : '(Video/Link)'}
                                 </label>
 
                                 <div className="flex flex-col gap-3">
@@ -637,7 +686,7 @@ export default function AdminPage() {
                                             type="file"
                                             ref={fileInputRef}
                                             className="hidden"
-                                            accept={(formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '.pdf,image/*' : 'video/*,image/*'}
+                                            accept={(formData.category === 'coloring-books' || formData.category === 'ebooks' || formData.category === 'Coloring books' || formData.category === 'Ebooks') ? '.pdf,image/*' : 'video/*,image/*'}
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) uploadFile(file, 'content');
@@ -803,7 +852,7 @@ export default function AdminPage() {
                                             }}
                                         />
                                         <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-slate-300 font-semibold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider border border-slate-700">
-                                            {item.category}{item.sub_category ? ` - ${item.sub_category}` : ''}
+                                            {(getCategory(item.category)?.label || item.category)}{item.sub_category ? ` - ${item.sub_category}` : ''}
                                         </div>
                                     </div>
 

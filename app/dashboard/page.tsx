@@ -11,6 +11,8 @@ import DashboardHeader from '@/src/components/DashboardHeader';
 import { WelcomePopup } from '@/src/components/WelcomePopup';
 import { PrintableCard } from '@/src/components/PrintableCard';
 import { getSignedUrl } from '@/src/utils/supabase/storage-actions';
+import { CategoryPills } from '@/src/components/CategoryPills';
+import { getCategory } from '@/src/config/categories';
 
 function CategoryItemCard({ item, supabase, onClick }: { item: any; supabase: any; onClick: () => void }) {
   const THUMBNAIL_BASE_URL = 'https://hokehjxsejqbhbeugqnt.supabase.co/storage/v1/object/public/thumbnails/';
@@ -56,14 +58,14 @@ function CategoryItemCard({ item, supabase, onClick }: { item: any; supabase: an
         {/* Category Badge */}
         <div className="absolute top-3 left-3 z-20">
           <span className="bg-white text-navy text-[10px] md:text-xs font-black px-2.5 py-1 md:py-1.5 rounded-full border-2 border-navy shadow-[2px_2px_0px_0px_#1C304A] uppercase tracking-tighter">
-            {item.category}
+            {getCategory(item.category)?.label || item.category}
           </span>
         </div>
 
         {/* Hover Overlay */}
         <div className={`absolute inset-0 bg-navy/40 backdrop-blur-[2px] transition-opacity duration-300 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100`}>
           <div className="bg-white/90 p-4 rounded-full shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300 delay-75">
-            {item.category === 'Videos' ? (
+            {item.category === 'Videos' || item.category === 'videos' ? (
               <PlayCircle className="w-10 h-10 text-persimmon" />
             ) : (
               <BookOpen className="w-10 h-10 text-sky" />
@@ -84,6 +86,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const currentCategory = searchParams.get('cat') || 'Home';
+  const subParam = searchParams.get('sub');
   const showYearlyWelcome = searchParams.get('welcome') === 'yearly';
   const supabase = createClient();
 
@@ -98,7 +101,7 @@ function DashboardContent() {
   const [userEmail, setUserEmail] = useState('');
   const [isMember, setIsMember] = useState(false);
   const [subscriptionType, setSubscriptionType] = useState('');
-  const [activeSubTab, setActiveSubTab] = useState('All');
+  const [activeSubTab, setActiveSubTab] = useState(subParam || 'All');
 
   const handleDownloadBonus = async () => {
     setIsDownloadingBonus(true);
@@ -204,7 +207,17 @@ function DashboardContent() {
       }
 
       if (currentCategory !== 'Home') {
-        query = query.eq('category', currentCategory);
+        const catConfig = getCategory(currentCategory);
+        if (catConfig) {
+          const matchCategories = [
+            catConfig.slug,
+            catConfig.label,
+            ...(catConfig.aliases || [])
+          ];
+          query = query.in('category', matchCategories);
+        } else {
+          query = query.eq('category', currentCategory);
+        }
       } else {
         query = query.limit(4);
       }
@@ -223,10 +236,10 @@ function DashboardContent() {
     fetchContent();
   }, [currentCategory, supabase, router]);
 
-  // Reset sub-tab when category changes
+  // Sync sub-tab when category or subParam changes
   useEffect(() => {
-    setActiveSubTab('All');
-  }, [currentCategory]);
+    setActiveSubTab(subParam || 'All');
+  }, [currentCategory, subParam]);
 
   /**
    * Resolves the sub-category label from an item.
@@ -247,20 +260,26 @@ function DashboardContent() {
   ).sort();
 
   // Apply active sub-tab filter to items shown in the grid
-  const filteredItems = activeSubTab === 'All'
+  const effectiveSub = (subParam || activeSubTab || 'All').toLowerCase();
+  const filteredItems = effectiveSub === 'all'
     ? items
-    : items.filter(item => resolveSubCategory(item) === activeSubTab);
+    : items.filter(item => resolveSubCategory(item).toLowerCase() === effectiveSub);
 
   const getCategoryDetails = (cat: string) => {
-    switch (cat) {
-      case 'Coloring books': return { title: "🎨 Let's Color!", icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
-      case 'eBooks': return { title: "📚 Story Time!", textIcon: "📚" };
-      case 'Puzzles': return { title: "🧩 Brain Teasers!", textIcon: "🧩" };
-      case 'Videos': return { title: "🎬 Movie Magic!", icon: <PlayCircle className="w-8 h-8 text-persimmon" /> };
-      case 'Home': return { title: "Discover New Stuffs", icon: <Compass className="w-8 h-8 text-sky" /> };
-      case 'Printables': return { title: "🖨️ Printables", icon: <BookOpen className="w-8 h-8 text-sky" /> };
-      default: return { title: cat, icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
+    if (cat === 'Home') return { title: "Discover New Stuffs", icon: <Compass className="w-8 h-8 text-sky" /> };
+    if (cat === 'Printables') return { title: "🖨️ Printables", icon: <BookOpen className="w-8 h-8 text-sky" /> };
+    const catConfig = getCategory(cat);
+    if (catConfig) {
+      switch (catConfig.slug) {
+        case 'coloring-books': return { title: "🎨 Let's Color!", icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
+        case 'videos': return { title: "🎬 Movie Magic!", icon: <PlayCircle className="w-8 h-8 text-persimmon" /> };
+        case 'ebooks': return { title: "📚 Story Time!", textIcon: "📚" };
+        case 'puzzles': return { title: "🧩 Brain Teasers!", textIcon: "🧩" };
+        case 'education': return { title: "🎓 Learning Hub!", icon: <Sparkles className="w-8 h-8 text-sky" /> };
+        default: return { title: catConfig.label, icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
+      }
     }
+    return { title: cat, icon: <Star className="w-8 h-8 text-sunshine fill-sunshine" /> };
   };
 
   const catDetails = getCategoryDetails(currentCategory);
@@ -368,23 +387,14 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* Dynamic Sub-Category Tab Bar */}
-        {!loading && uniqueSubCategories.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap mb-8">
-            {['All', ...uniqueSubCategories].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveSubTab(tab)}
-                className={`px-5 py-2 rounded-full font-black text-sm border-2 transition-all duration-200 capitalize
-                  ${
-                    activeSubTab === tab
-                      ? 'bg-navy text-white border-navy shadow-[3px_3px_0px_0px_rgba(28,48,74,0.4)] -translate-y-0.5'
-                      : 'bg-white text-navy border-navy hover:bg-sky hover:text-white hover:border-sky hover:-translate-y-0.5'
-                  }`}
-              >
-                {tab === 'All' ? '✨ All' : tab}
-              </button>
-            ))}
+        {/* Dynamic Sub-Category CategoryPills */}
+        {!loading && currentCategory !== 'Home' && getCategory(currentCategory) && (
+          <div className="mb-8">
+            <CategoryPills
+              categorySlug={getCategory(currentCategory)!.slug}
+              activeSubCategory={subParam || activeSubTab}
+              onSelectSubCategory={(tab) => setActiveSubTab(tab)}
+            />
           </div>
         )}
 
@@ -429,9 +439,13 @@ function DashboardContent() {
                         ? item.category.split('/')[0].trim()
                         : item.category;
 
-                      if (effectiveCategory === 'Coloring books') {
+                      const catConfig = getCategory(effectiveCategory);
+                      const isColoring = catConfig?.slug === 'coloring-books' || effectiveCategory === 'Coloring books';
+                      const isVideo = catConfig?.slug === 'videos' || effectiveCategory === 'Videos';
+
+                      if (isColoring) {
                         setSelectedPdf({ url: item.url, title: item.title });
-                      } else if (effectiveCategory === 'Videos') {
+                      } else if (isVideo) {
                         setSelectedVideo({ url: item.url, title: item.title });
                       } else {
                         window.open(item.url, '_blank');

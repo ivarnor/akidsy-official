@@ -82,7 +82,7 @@ export default function SubcategoryContent({ slug }: { slug: string }) {
             const { data, error } = await supabase
                 .from('content')
                 .select('*')
-                .eq('category', 'Coloring books')
+                .in('category', ['coloring-books', 'Coloring books'])
                 .eq('sub_category', slug)
                 .order('created_at', { ascending: false });
 

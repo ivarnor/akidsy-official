@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import { Sparkles, Home, PlayCircle, Palette, BookOpen, Puzzle, GraduationCap, LogOut, ChevronDown } from 'lucide-react';
+import { getSubCategories } from '@/src/config/categories';
 
 export default function DashboardHeader() {
+    const coloringSubCategories = getSubCategories('coloring-books');
+
     return (
         <header className="sticky top-0 z-50 bg-white border-b-4 border-navy shadow-[0_4px_0_0_#1C304A]">
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-8">
@@ -24,21 +27,21 @@ export default function DashboardHeader() {
 
                     {/* Categories Dropdown Container */}
                     <div className="relative group flex items-center">
-                        <Link href="/dashboard?cat=Coloring" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy hover:bg-persimmon hover:text-white transition-colors whitespace-nowrap border-2 border-transparent hover:border-navy">
+                        <Link href="/dashboard?cat=coloring-books" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy hover:bg-persimmon hover:text-white transition-colors whitespace-nowrap border-2 border-transparent hover:border-navy">
                             <Palette className="w-5 h-5" /> Coloring <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
                         </Link>
 
                         {/* Dropdown Menu */}
                         <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-48 bg-white border-4 border-navy rounded-2xl shadow-[4px_4px_0px_0px_#1C304A] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 flex flex-col overflow-hidden">
-                            <Link href="/dashboard/coloring/animals" className="px-4 py-3 font-bold text-navy hover:bg-sky transition-colors border-b-2 border-slate-100 flex items-center gap-2">
-                                🦁 Animals
-                            </Link>
-                            <Link href="/dashboard/coloring/space" className="px-4 py-3 font-bold text-navy hover:bg-sunshine transition-colors border-b-2 border-slate-100 flex items-center gap-2">
-                                🚀 Space
-                            </Link>
-                            <Link href="/dashboard/coloring/vehicles" className="px-4 py-3 font-bold text-navy hover:bg-persimmon hover:text-white transition-colors flex items-center gap-2">
-                                🚗 Vehicles
-                            </Link>
+                            {coloringSubCategories.map((sub) => (
+                                <Link
+                                    key={sub.slug}
+                                    href={`/dashboard/coloring/${sub.slug}`}
+                                    className="px-4 py-3 font-bold text-navy hover:bg-sky transition-colors border-b-2 border-slate-100 last:border-b-0 flex items-center gap-2"
+                                >
+                                    <span>{sub.emoji}</span> {sub.label}
+                                </Link>
+                            ))}
                         </div>
                     </div>
 
@@ -82,18 +85,18 @@ export default function DashboardHeader() {
                     <Palette className="w-4 h-4" /> Coloring
                 </Link>
                 {/* Mobile Direct Links instead of dropdown */}
-                <Link href="/dashboard?cat=Coloring" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-persimmon/10 border-2 border-navy whitespace-nowrap">
+                <Link href="/dashboard?cat=coloring-books" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-persimmon/10 border-2 border-navy whitespace-nowrap">
                     🎨 All Coloring
                 </Link>
-                <Link href="/dashboard/coloring/animals" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-sky/20 border-2 border-navy whitespace-nowrap">
-                    🦁 Animals
-                </Link>
-                <Link href="/dashboard/coloring/space" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-sunshine/20 border-2 border-navy whitespace-nowrap">
-                    🚀 Space
-                </Link>
-                <Link href="/dashboard/coloring/vehicles" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-persimmon/20 border-2 border-navy whitespace-nowrap">
-                    🚗 Vehicles
-                </Link>
+                {coloringSubCategories.map((sub) => (
+                    <Link
+                        key={sub.slug}
+                        href={`/dashboard/coloring/${sub.slug}`}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-sky/20 border-2 border-navy whitespace-nowrap"
+                    >
+                        <span>{sub.emoji}</span> {sub.label}
+                    </Link>
+                ))}
 
                 <Link href="/dashboard?cat=Ebooks" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-navy bg-white border-2 border-navy whitespace-nowrap">
                     <BookOpen className="w-4 h-4" /> Ebooks

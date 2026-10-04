@@ -18,6 +18,7 @@ import {
     Menu
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { getSubCategories } from '@/src/config/categories';
 import {
     Sidebar,
     SidebarContent,
@@ -34,6 +35,7 @@ export function AppSidebar() {
     const isCollapsed = state === "collapsed";
 
     const [isColoringOpen, setIsColoringOpen] = useState(false);
+    const coloringSubCategories = getSubCategories('coloring-books');
 
     const killVideo = () => {
         const docVideo = document.querySelector('video');
@@ -60,22 +62,27 @@ export function AppSidebar() {
 
     // Keep coloring open if we are in a coloring sub-route or cat=Coloring
     useEffect(() => {
-        if (pathname.includes('/dashboard/coloring') || categoryParams === 'Coloring') {
+        const isColoringCat =
+            categoryParams?.toLowerCase() === 'coloring' ||
+            categoryParams?.toLowerCase() === 'coloring-books' ||
+            categoryParams?.toLowerCase() === 'coloring books';
+
+        if (pathname.includes('/dashboard/coloring') || isColoringCat) {
             setIsColoringOpen(true);
         }
     }, [pathname, categoryParams]);
 
     const isActive = (path: string, cat?: string) => {
         if (cat) {
-            return pathname === '/dashboard' && categoryParams === cat;
+            const cleanCat = cat.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const currentCatClean = categoryParams?.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return pathname === '/dashboard' && currentCatClean === cleanCat;
         }
         if (path === '/dashboard') {
             return pathname === '/dashboard' && !categoryParams;
         }
         return pathname.startsWith(path);
     };
-
-
 
     const navItemClasses = "flex items-center w-full px-4 py-3 rounded-2xl font-bold transition-all border-2";
     const getLinkClasses = (active: boolean) =>
@@ -88,6 +95,12 @@ export function AppSidebar() {
         active
             ? `${subNavItemClasses} bg-sky/20 text-sky-800 border-sky/30 shadow-[2px_2px_0px_0px_rgba(56,189,248,0.2)]`
             : `${subNavItemClasses} text-navy/80 border-transparent hover:bg-slate-100 hover:text-navy hover:border-slate-200`;
+
+    const isColoringActive =
+        categoryParams?.toLowerCase() === 'coloring' ||
+        categoryParams?.toLowerCase() === 'coloring-books' ||
+        categoryParams?.toLowerCase() === 'coloring books' ||
+        pathname.includes('/dashboard/coloring');
 
     return (
         <Sidebar variant="sidebar" collapsible="icon" className="border-r-4 border-navy shadow-[4px_0_0_0_#1C304A] !z-[9999]">
@@ -117,7 +130,7 @@ export function AppSidebar() {
                 <div className="space-y-1">
                     <button
                         onClick={() => { killVideo(); state !== "collapsed" ? setIsColoringOpen(!isColoringOpen) : toggleSidebar(); }}
-                        className={`${getLinkClasses(categoryParams === 'Coloring' || pathname.includes('/dashboard/coloring'))} ${isCollapsed ? "mb-0" : ""} mb-2`}
+                        className={`${getLinkClasses(isColoringActive)} ${isCollapsed ? "mb-0" : ""} mb-2`}
                         title="Coloring Books"
                     >
                         <div className="flex items-center gap-3 shrink-0">
@@ -127,28 +140,17 @@ export function AppSidebar() {
                         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? "hidden" : ""} ${isColoringOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    <div className={`overflow-hidden transition-all duration-200 ease-in-out pl-4 pr-2 space-y-1 ${isCollapsed ? "hidden" : ""} ${isColoringOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
-                        <Link
-                            href="/dashboard/coloring/animals"
-                            className={getSubLinkClasses(pathname === '/dashboard/coloring/animals')}
-                            onClick={killVideo}
-                        >
-                            <span className="text-xl leading-none">🦁</span> Animals
-                        </Link>
-                        <Link
-                            href="/dashboard/coloring/space"
-                            className={getSubLinkClasses(pathname === '/dashboard/coloring/space')}
-                            onClick={killVideo}
-                        >
-                            <span className="text-xl leading-none">🚀</span> Space
-                        </Link>
-                        <Link
-                            href="/dashboard/coloring/vehicles"
-                            className={getSubLinkClasses(pathname === '/dashboard/coloring/vehicles')}
-                            onClick={killVideo}
-                        >
-                            <span className="text-xl leading-none">🚗</span> Vehicles
-                        </Link>
+                    <div className={`overflow-hidden transition-all duration-200 ease-in-out pl-4 pr-2 space-y-1 ${isCollapsed ? "hidden" : ""} ${isColoringOpen ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        {coloringSubCategories.map((sub) => (
+                            <Link
+                                key={sub.slug}
+                                href={`/dashboard/coloring/${sub.slug}`}
+                                className={getSubLinkClasses(pathname === `/dashboard/coloring/${sub.slug}`)}
+                                onClick={killVideo}
+                            >
+                                <span className="text-xl leading-none">{sub.emoji}</span> {sub.label}
+                            </Link>
+                        ))}
                     </div>
                 </div>
 
