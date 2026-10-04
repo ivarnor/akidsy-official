@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'via.placeholder.com' },
       { protocol: 'https', hostname: 'placehold.co' },
       { protocol: 'https', hostname: 'hokehjxsejqbhbeugqnt.supabase.co' },
+      { protocol: 'https', hostname: 'pub-6ad3b83efdde42349387698c6194502b.r2.dev' },
+      { protocol: 'https', hostname: '**.r2.dev' },
     ],
   },
   // output: 'standalone',

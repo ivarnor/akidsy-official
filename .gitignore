@@ -7,4 +7,6 @@ coverage/
 !.env.example
 
 .vercel
-.env*
+.roo/
+roo-config.json
+*.code-workspace

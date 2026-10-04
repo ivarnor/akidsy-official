@@ -70,12 +70,17 @@ export function PdfViewerModal({
         setError(null);
         setProxyUrl(null);
 
-        const { bucket, path } = resolveBucketAndPath(url);
-        console.log(`[PdfViewerModal] bucket="${bucket}" path="${path}" isIOS=${ios}`);
-
-        // Build the proxy URL — the proxy serves the PDF with Content-Type: application/pdf
-        // which is critical for Safari to open the full multi-page viewer.
-        const pUrl = `/api/pdf-proxy?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
+        let pUrl: string;
+        if (url.startsWith('http') && !url.includes('supabase.co')) {
+            // Direct Cloudflare R2 / public CDN URL
+            pUrl = url;
+        } else {
+            const { bucket, path } = resolveBucketAndPath(url);
+            console.log(`[PdfViewerModal] bucket="${bucket}" path="${path}" isIOS=${ios}`);
+            // Build the proxy URL — the proxy serves the PDF with Content-Type: application/pdf
+            // which is critical for Safari to open the full multi-page viewer.
+            pUrl = `/api/pdf-proxy?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
+        }
 
         if (ios) {
             // On iOS, iframes don't render PDFs. Instead, open directly in new tab.

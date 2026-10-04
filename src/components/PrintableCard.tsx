@@ -77,32 +77,38 @@ export function PrintableCard({
         setActionLoading(mode);
 
         try {
-            const { bucket, path } = resolveBucketAndPath();
-            console.log(`[PrintableCard] Resolved bucket="${bucket}" path="${path}"`);
+            const rawUrl = item.url || '';
+            const isExternalUrl = rawUrl.startsWith('http') && !rawUrl.includes('supabase.co');
 
-            // Build the proxy URL which:
-            // 1. Verifies auth server-side
-            // 2. Fetches PDF from Supabase
-            // 3. Re-serves it with Content-Type: application/pdf (critical for iOS)
-            const proxyUrl = `/api/pdf-proxy?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
-            console.log('[PrintableCard] Proxy URL:', proxyUrl);
+            let targetUrl: string;
+            let downloadFileName: string;
+
+            if (isExternalUrl) {
+                targetUrl = rawUrl;
+                downloadFileName = rawUrl.split('/').pop()?.split('?')[0] || `${item.title}.pdf`;
+            } else {
+                const { bucket, path } = resolveBucketAndPath();
+                console.log(`[PrintableCard] Resolved bucket="${bucket}" path="${path}"`);
+                targetUrl = `/api/pdf-proxy?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`;
+                downloadFileName = path.split('/').pop() || `${item.title}.pdf`;
+            }
+
+            console.log('[PrintableCard] Target URL:', targetUrl);
 
             if (mode === 'download') {
-                // Force download using <a download> trick
                 const link = document.createElement('a');
-                link.href = proxyUrl;
-                const fileName = path.split('/').pop() || `${item.title}.pdf`;
-                link.setAttribute('download', fileName);
+                link.href = targetUrl;
+                link.setAttribute('download', downloadFileName);
+                if (isExternalUrl) {
+                    link.setAttribute('target', '_blank');
+                }
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
             } else {
-                // VIEW mode: Use <a target="_blank"> — the most reliable method on iOS.
-                // window.open() is frequently blocked by iOS Safari as a popup.
-                // The proxy ensures Content-Type: application/pdf so Safari opens
-                // the full multi-page PDF viewer, not a single-page PNG preview.
+                // VIEW mode: Use <a target="_blank">
                 const a = document.createElement('a');
-                a.href = proxyUrl;
+                a.href = targetUrl;
                 a.target = '_blank';
                 a.rel = 'noopener noreferrer';
                 document.body.appendChild(a);

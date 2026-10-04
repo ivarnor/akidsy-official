@@ -146,56 +146,53 @@ export default function AdminPage() {
         const isContent = type === 'content';
         const setUploading = isContent ? setContentUploading : setThumbnailUploading;
 
-        let bucket = 'content-assets';
-        let folder = 'content';
-
-        if (isContent) {
-            const cat = formData.category.toLowerCase().replace(/\s+/g, '-');
-            folder = cat;
-            if (formData.category === 'Videos') {
-                bucket = 'videos';
-            }
-        } else {
-            bucket = 'thumbnails';
-            folder = 'covers';
-        }
-
         setUploading(true);
 
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-            const filePath = `${folder}/${fileName}`;
+            // 1. Request presigned PUT URL from our API endpoint
+            const res = await fetch('/api/admin/r2/presigned-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type || 'application/octet-stream',
+                    type,
+                    category: formData.category,
+                }),
+            });
 
-            const { error: uploadError } = await supabase.storage
-                .from(bucket)
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (uploadError) throw uploadError;
-
-            let contentUrl = '';
-
-            // Videos bucket is private, so publicUrl is useless. We store the raw path for signed URLs later
-            if (bucket === 'videos') {
-                contentUrl = filePath;
-            } else {
-                const { data } = supabase.storage
-                    .from(bucket)
-                    .getPublicUrl(filePath);
-                contentUrl = data.publicUrl;
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Server responded with status ${res.status}`);
             }
 
+            const { uploadUrl, publicUrl } = await res.json();
+            if (!uploadUrl || !publicUrl) {
+                throw new Error('Server did not return a valid presigned upload URL.');
+            }
+
+            // 2. Direct browser-to-R2 upload via PUT (bypasses serverless payload limit)
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type || 'application/octet-stream',
+                },
+            });
+
+            if (!uploadRes.ok) {
+                throw new Error(`Direct R2 upload failed with HTTP ${uploadRes.status} ${uploadRes.statusText}`);
+            }
+
+            // 3. Store public R2 URL in form state
             setFormData(prev => ({
                 ...prev,
-                [isContent ? 'url' : 'thumbnail_url']: contentUrl
+                [isContent ? 'url' : 'thumbnail_url']: publicUrl
             }));
 
         } catch (err: any) {
-            console.error(err);
-            alert(`Magic failed: ${err.message || `Make sure the "${bucket}" bucket exists and is public!`}`);
+            console.error('R2 upload error:', err);
+            alert(`Upload failed: ${err.message || 'Unknown error during upload'}`);
         } finally {
             setUploading(false);
         }
@@ -315,26 +312,61 @@ export default function AdminPage() {
         const itemToDelete = items.find(i => i.id === id);
 
         try {
-            // 1. Delete associated files from Storage
+            // 1. Delete associated files from Storage (R2 or Supabase)
             if (itemToDelete) {
+                const isR2Url = (u?: string) => Boolean(
+                    u && (
+                        u.includes('.r2.dev') ||
+                        (process.env.NEXT_PUBLIC_R2_PUBLIC_URL && u.startsWith(process.env.NEXT_PUBLIC_R2_PUBLIC_URL))
+                    )
+                );
+
+                // Handle Cloudflare R2 deletions
+                if (isR2Url(itemToDelete.url)) {
+                    try {
+                        await fetch('/api/admin/r2/delete', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: itemToDelete.url }),
+                        });
+                    } catch (r2Err) {
+                        console.error('R2 content delete error:', r2Err);
+                    }
+                }
+                if (isR2Url(itemToDelete.thumbnail_url)) {
+                    try {
+                        await fetch('/api/admin/r2/delete', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: itemToDelete.thumbnail_url }),
+                        });
+                    } catch (r2Err) {
+                        console.error('R2 thumbnail delete error:', r2Err);
+                    }
+                }
+
+                // Handle legacy Supabase storage deletions
                 const extractPath = (url: string, bucketName: string) => url?.split(`/${bucketName}/`)[1]?.split('?')[0];
 
-                const contentPath = extractPath(itemToDelete.url, 'content-assets') || itemToDelete.url; // If it's a video, url IS the path
-                const thumbPath = extractPath(itemToDelete.thumbnail_url, 'thumbnails') || extractPath(itemToDelete.thumbnail_url, 'content-assets'); // Fallback for old items
-
-                const isVideo = itemToDelete.category === 'Videos' || itemToDelete.category === 'videos';
-                if (contentPath && !isVideo) {
-                    const { error } = await supabase.storage.from('content-assets').remove([contentPath]);
-                    if (error) console.error("Content storage delete error:", error);
-                } else if (contentPath && isVideo) {
-                    const { error } = await supabase.storage.from('videos').remove([contentPath]);
-                    if (error) console.error("Video storage delete error:", error);
+                if (!isR2Url(itemToDelete.url)) {
+                    const contentPath = extractPath(itemToDelete.url, 'content-assets') || itemToDelete.url; // If it's a video, url IS the path
+                    const isVideo = itemToDelete.category === 'Videos' || itemToDelete.category === 'videos';
+                    if (contentPath && !isVideo && !contentPath.startsWith('http')) {
+                        const { error } = await supabase.storage.from('content-assets').remove([contentPath]);
+                        if (error) console.error("Content storage delete error:", error);
+                    } else if (contentPath && isVideo && !contentPath.startsWith('http')) {
+                        const { error } = await supabase.storage.from('videos').remove([contentPath]);
+                        if (error) console.error("Video storage delete error:", error);
+                    }
                 }
-                if (thumbPath) {
-                    // Determine which bucket it was in by checking the URL string
-                    const bucket = itemToDelete.thumbnail_url?.includes('/thumbnails/') ? 'thumbnails' : 'content-assets';
-                    const { error } = await supabase.storage.from(bucket).remove([thumbPath]);
-                    if (error) console.error("Thumbnail storage delete error:", error);
+
+                if (!isR2Url(itemToDelete.thumbnail_url)) {
+                    const thumbPath = extractPath(itemToDelete.thumbnail_url, 'thumbnails') || extractPath(itemToDelete.thumbnail_url, 'content-assets'); // Fallback for old items
+                    if (thumbPath && !thumbPath.startsWith('http')) {
+                        const bucket = itemToDelete.thumbnail_url?.includes('/thumbnails/') ? 'thumbnails' : 'content-assets';
+                        const { error } = await supabase.storage.from(bucket).remove([thumbPath]);
+                        if (error) console.error("Thumbnail storage delete error:", error);
+                    }
                 }
             }
 
